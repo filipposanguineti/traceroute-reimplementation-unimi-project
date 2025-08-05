@@ -1,0 +1,8 @@
+# Build directory (out-of-source)
+build/
+
+# Cartella di configurazione VS Code
+.vscode/
+
+# Cartella dei binari
+bin/
