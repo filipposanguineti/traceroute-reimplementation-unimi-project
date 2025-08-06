@@ -91,8 +91,6 @@ char *dns_resolver_ipv4(char *url){
 
 
     //converto il binario in stringa
-    //devo allocarlo dinamicamente per forza, se no nella return non viene salvato e la variabile si autodistrugge
-     //buffer taglia ipv4+1 
     char buffer[INET_ADDRSTRLEN]; //buffer temporaneo per la conversione da binario a stringa
 
     if(inet_ntop(AF_INET, &ip_bin, buffer, sizeof(buffer)) == NULL) { //converto da binario a stringa

@@ -10,6 +10,7 @@
 #include <sys/types.h> //necessaria per estendere i tipi di dato
 
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
+#include "udp.h" //includo il file header per le dichiarazioni delle funzioni udp
 
 
 
@@ -72,6 +73,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error in checking IP address.\n");
         return 1;
     }
+
+    int sd = create_socket_udp(); //creo la socket udp
+    ttl_increment(sd, 12); 
+    stampa_ttl_test(sd); //stampo il ttl della socket
+    close_socket_udp(sd); //chiudo la socket udp
+
     
     
 
