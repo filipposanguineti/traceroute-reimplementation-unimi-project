@@ -12,6 +12,9 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+# Definisci macro per POSIX (alcune funzioni di rete le richiedono)
+add_compile_definitions(_POSIX_C_SOURCE=200112L)
+
 # Directory include
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
