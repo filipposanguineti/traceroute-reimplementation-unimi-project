@@ -8,6 +8,7 @@
 
 //dichiarazioni funzioni
 int check_ipv4(char *ip);
+void store_ip(char *ip, struct in_addr *ip_bin);
 
 
 
@@ -28,12 +29,21 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+
     //controllo se l'utente ha fornito un ip o un url
     if(check_ipv4(argv[1]) == 1) {
-        //devo salvare l'ip in una variabile
+
+        //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
+        char *ip_string = argv[1]; //la stringa
+
+        struct in_addr ip_bin; //ora vuota
+
+        store_ip(ip_string, &ip_bin); //salvo l'ip in formato binario, passando la variabile per argomento
+
         printf("Valid IPv4 address provided: %s\n", argv[1]);
     
     }else if(check_ipv4(argv[1]) == 0) {
+
         //devo risolvere l'url in un ip
         printf("Not valid IPv4 address, resolving URL: %s\n", argv[1]);
     }else{
@@ -62,5 +72,18 @@ int check_ipv4(char *ip){
     //se val è -1: errore
 
     return val;
+
+}
+
+void store_ip(char *ip, struct in_addr *ip_bin) {
+
+    inet_pton(AF_INET, ip, ip_bin); //uso di nuovo inet_pton, ma ora salvo la variabile
+
+    if(ip_bin == NULL) {
+        fprintf(stderr, "Error, the address doesn't exist.\n");
+        return;
+    }
+    
+    return;
 
 }
