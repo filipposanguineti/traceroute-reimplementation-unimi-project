@@ -16,6 +16,7 @@
 
 int create_socket_udp();
 int ttl_increment(int sd, int ttl);
+int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index);
 void stampa_ttl_test(int sd);
 int close_socket_udp(int sd);
 

@@ -77,6 +77,7 @@ int main(int argc, char *argv[]) {
     int sd = create_socket_udp(); //creo la socket udp
     ttl_increment(sd, 12); 
     stampa_ttl_test(sd); //stampo il ttl della socket
+    send_probe(sd, ip_bin, 12, 0); //invio un probe all'ip con ttl 12 e probe index 0
     close_socket_udp(sd); //chiudo la socket udp
 
     

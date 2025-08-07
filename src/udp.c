@@ -49,6 +49,8 @@ int create_socket_udp(){
 
 }
 
+
+
 int ttl_increment(int sd, int ttl){
 
     //per modificare il ttl posso usare la funzione setsockopt
@@ -63,6 +65,32 @@ int ttl_increment(int sd, int ttl){
     return 0;
 }
 
+
+int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index){
+
+    //creo la struttura sockaddr_in per il destinatario
+    int port = 33434 + ttl + probe_index;
+    struct sockaddr_in dest;
+    memset(&dest, 0, sizeof(dest)); 
+
+    dest.sin_family = AF_INET; //imposto la famiglia di indirizzi
+    dest.sin_addr = ip_bin; //imposto l'indirizzo di destinazione
+    dest.sin_port = htons(port); //imposto la porta di destinazione con cui identificherò le risposte
+
+    //mando il pacchetto, lo lascio vuoto per comodità
+    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest)); //nessun buffer, quindi len 0, nessuna opzione quindi 0
+
+    if(sent < 0) {
+        fprintf(stderr, "Error sending probe.\n");
+        return -1;
+    }else {
+        printf("Probe sent to %s on port %d with TTL %d\n", inet_ntoa(ip_bin), port, ttl); //inet_ntoa è simile a inet_ntop ma più rudimentale e meno sicuro, non alloca dinamicamnete la memoria
+    }
+
+}
+
+
+
 void stampa_ttl_test(int sd){
     int current_ttl;
     socklen_t optlen = sizeof(current_ttl);
@@ -73,6 +101,10 @@ void stampa_ttl_test(int sd){
         return;
     }
 }
+
+
+
+
 
 
 
