@@ -24,7 +24,8 @@ int create_socket_udp(){
         return -1; 
     }
 
-    printf("UDP socket created successfully: %d\n", sd);;
+    printf("UDP socket created successfully: %d\n", sd);
+    return sd;
 
 }
 
@@ -38,6 +39,8 @@ int ttl_increment(int sd, int ttl){
         fprintf(stderr, "Error setting TTL.\n");
         return -1; 
     }
+
+    return 0;
 }
 
 void stampa_ttl_test(int sd){
@@ -46,7 +49,8 @@ void stampa_ttl_test(int sd){
     if (getsockopt(sd, IPPROTO_IP, IP_TTL, &current_ttl, &optlen) == -1) {
         perror("getsockopt IP_TTL");
     } else {
-    printf("TTL effettivo sulla socket: %d\n", current_ttl);
+        printf("TTL effettivo sulla socket: %d\n", current_ttl);
+        return;
     }
 }
 
