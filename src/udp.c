@@ -25,6 +25,26 @@ int create_socket_udp(){
     }
 
     printf("UDP socket created successfully: %d\n", sd);
+
+    //ora faccio la bind per settare una porta fissa su cui vogliamo far passare i messaggi
+    struct sockaddr_in bind_addr; 
+    memset(&bind_addr, 0, sizeof(bind_addr));
+
+    bind_addr.sin_family = AF_INET; //imposto la famiglia di indirizzi
+    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY); //voglio usare una qualsiasi interfaccia (se metto 127.0.0.1 rimane solo in loopback), passo INADDR_ANY in big endian
+    bind_addr.sin_port = htons(7777); //metto la porta 7777 in big endian (tutte le comunicazioni passeranno da questa porta interna)
+
+    int result = bind(sd, (struct sockaddr *)&bind_addr, sizeof(bind_addr)); //faccio la bind della socket all'indirizzo e alla porta
+
+    if(result < 0) {
+        fprintf(stderr, "Error binding UDP socket.\n");
+        return -1; //ritorno -1 in caso di errore
+    }
+
+    printf("Binding UDP socket to port 7777...\n");
+
+
+
     return sd;
 
 }
