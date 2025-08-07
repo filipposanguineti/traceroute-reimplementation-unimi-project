@@ -11,8 +11,9 @@
 
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
 #include "udp.h" //includo il file header per le dichiarazioni delle funzioni udp
+#include "icmp.h" //includo il file header per le dichiarazioni delle funzioni icmp
 
-
+#define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
 
 //dichiarazioni funzioni
@@ -78,7 +79,13 @@ int main(int argc, char *argv[]) {
     ttl_increment(sd, 12); 
     stampa_ttl_test(sd); //stampo il ttl della socket
     send_probe(sd, ip_bin, 12, 0); //invio un probe all'ip con ttl 12 e probe index 0
+
+    int sd2 = create_socket_raw_icmp(); //creo la socket raw icmp
+    char buffer[BUFFER_SIZE]; //creo un buffer per ricevere i pacchetti icmp
+    receive_icmp(sd2, buffer); //ricevo un pacchetto icmp
+
     close_socket_udp(sd); //chiudo la socket udp
+    close_socket_icmp(sd2); //chiudo la socket raw icmp
 
     
     

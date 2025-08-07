@@ -18,7 +18,7 @@
 
 int create_socket_udp(){
 
-    int sd = socket(AF_INET, SOCK_DGRAM, 0); //creo una socket UDP
+    int sd = socket(AF_INET, SOCK_DGRAM, 0); //creo una socket UDP, 0 sta per il protocollo predefinito
     if(sd < 0) {
         fprintf(stderr, "Error creating UDP socket.\n");
         return -1; 
@@ -85,6 +85,7 @@ int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index){
         return -1;
     }else {
         printf("Probe sent to %s on port %d with TTL %d\n", inet_ntoa(ip_bin), port, ttl); //inet_ntoa è simile a inet_ntop ma più rudimentale e meno sicuro, non alloca dinamicamnete la memoria
+        return 0;
     }
 
 }
