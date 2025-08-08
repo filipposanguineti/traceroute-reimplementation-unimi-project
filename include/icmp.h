@@ -17,6 +17,7 @@
 
 int create_socket_raw_icmp();
 int receive_icmp(int sd, char *buffer);
+int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int error, int port);
 int close_socket_icmp(int sd);
 
 

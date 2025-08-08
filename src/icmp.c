@@ -56,7 +56,7 @@ int receive_icmp(int sd, char *buffer){
 }
 
 
-int extract_rec_data(char *data, struct in_addr *addr, int *error){
+int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int error, int port){
 
     //devo recuperare l'ip, e l'error code dal pacchetto ricevuto, e la porta usata per distinguere il probe giusto
 
@@ -72,6 +72,34 @@ int extract_rec_data(char *data, struct in_addr *addr, int *error){
     //dentro la struct iphdr c'è il campo saddr che contiene l'indirizzo IP del mittente, il valore è big-endian 
     struct iphdr *ip_header = (struct iphdr *) data; //devo castare a iphdr per poter leggere correttamente i campi
     addr->s_addr = ip_header->saddr; //metto l'ip dentro s-addr perché è il campo che lo deve contenere (diverso da inet_pton a cui si passa semplicemente la struct in_addr)
+
+    if(inet_ntop(AF_INET, addr, addr_string, INET_ADDRSTRLEN) == NULL) { //converto l'indirizzo IP binario in stringa
+        fprintf(stderr, "Error converting binary IP to string.\n");
+        return -1; //ritorno -1 in caso di errore
+    }
+    printf("Extracted IP address: %s\n", addr_string); //stampo per testing
+
+
+    //estrazione type
+    //per trovare l'inizio dell'header icmp, devo saltare oltre quello ip. Devo recuperare il campo ihl dell'header ip e moltiplicarlo per 4 per esprimerlo in bytes (perché conta con 32bit ovvero 4 bytes)
+    int ip_lenght = ip_header->ihl * 4; 
+    struct icmphdr *icmp_header = (struct icmphdr *) (data + ip_lenght); //devo castare a icmphdr per poter leggere correttamente i campi, sommando data all'header ip arrivo a quello icmp
+    int type = icmp_header->type; //estraggo il type
+    error = icmp_header->code; //estraggo il code
+    printf("ICMP Type: %d, Code: %d\n", type, error); //stampo per testing
+
+    //estrazione porta
+    //siccome prima di udp c'è un altro header ip (quello mio originale del probe), devo calcolarne la lunghezza e superarlo. Per superare icmp basta aggiungere 8 byte (icmp ha una lunghezza fissa)
+    struct iphdr *ip_header_probe = (struct iphdr *) (data + ip_lenght + sizeof(struct icmphdr)); 
+    int ip_probe_length = ip_header_probe->ihl * 4; //calcolo la lunghezza dell'header ip del probe
+
+    //ora posso andare all'header udp
+    struct udphdr *udp_header = (struct udphdr *) (data + ip_lenght + sizeof(struct icmphdr) + ip_probe_length); //uso il sizeof al posto di 8 byte
+    port = ntohs(udp_header->dest); //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
+    printf("UDP Port: %d\n", port); //stampo per testing
+
+
+    return 0;
 
 }
 
@@ -89,3 +117,63 @@ int close_socket_icmp(int sd){
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+//MEMO SULLA STRUTTURA DEI PACCHETTI RICEVUTI
+
+// [0]  IP header esterno (struct iphdr) - 20 byte min. (ihl*4)
+//      Campo         | Dimensione | Descrizione
+//      --------------+------------+--------------------------------
+//      version       | 4 bit      | Versione IP (4 per IPv4)
+//      ihl           | 4 bit      | Lunghezza header IP in parole da 32 bit
+//      tos           | 1 byte     | Type of Service
+//      tot_len       | 2 byte     | Lunghezza totale pacchetto IP
+//      id            | 2 byte     | Identificatore
+//      frag_off      | 2 byte     | Offset di frammento + flag DF/MF
+//      ttl           | 1 byte     | Time To Live residuo
+//      protocol      | 1 byte     | Protocollo (1 = ICMP)
+//      check         | 2 byte     | Checksum header IP
+//      saddr         | 4 byte     | IP sorgente (router o destinazione)
+//      daddr         | 4 byte     | IP destinazione (te)
+
+// [iphdr->ihl*4]  ICMP header (struct icmphdr) - 8 byte
+//      Campo         | Dimensione | Descrizione
+//      --------------+------------+--------------------------------
+//      type          | 1 byte     | Tipo messaggio ICMP
+//      code          | 1 byte     | Sotto-tipo/dettaglio
+//      checksum      | 2 byte     | Checksum ICMP
+//      rest_of_hdr   | 4 byte     | Varia in base al tipo (es. unused/MTU/pointer)
+
+// [+8]  IP header originale (struct iphdr) - 20 byte min.
+//      Campo         | Dimensione | Descrizione
+//      --------------+------------+--------------------------------
+//      version       | 4 bit
+//      ihl           | 4 bit
+//      tos           | 1 byte
+//      tot_len       | 2 byte
+//      id            | 2 byte
+//      frag_off      | 2 byte
+//      ttl           | 1 byte
+//      protocol      | 1 byte     | (17 = UDP nel traceroute)
+//      check         | 2 byte
+//      saddr         | 4 byte     | IP sorgente originale (io)
+//      daddr         | 4 byte     | IP destinazione originale
+
+// [ip_orig->ihl*4 dopo questo punto]  UDP header originale (struct udphdr) - 8 byte
+//      Campo         | Dimensione | Descrizione
+//      --------------+------------+--------------------------------
+//      source        | 2 byte     | Porta sorgente (7777)
+//      dest          | 2 byte     | Porta destinazione (33434 + ttl + probe)
+//      len           | 2 byte     | Lunghezza totale UDP (header+payload)
+//      check         | 2 byte     | Checksum UDP
+
+

@@ -76,13 +76,19 @@ int main(int argc, char *argv[]) {
     }
 
     int sd = create_socket_udp(); //creo la socket udp
-    ttl_increment(sd, 12); 
+    ttl_increment(sd, 2); 
     stampa_ttl_test(sd); //stampo il ttl della socket
-    send_probe(sd, ip_bin, 12, 0); //invio un probe all'ip con ttl 12 e probe index 0
+    send_probe(sd, ip_bin, 2, 0); //invio un probe all'ip con ttl 12 e probe index 0
 
     int sd2 = create_socket_raw_icmp(); //creo la socket raw icmp
     char buffer[BUFFER_SIZE]; //creo un buffer per ricevere i pacchetti icmp
     receive_icmp(sd2, buffer); //ricevo un pacchetto icmp
+    //estraggo i dati dal pacchetto ricevuto
+    struct in_addr addr_extract; //variabile per l'indirizzo estratto
+    char addr_string[INET_ADDRSTRLEN]; //buffer per la conversione da binario a stringa
+    int error;
+    int port_rec;
+    extract_rec_data(buffer, &addr_extract, addr_string, error, port_rec); //estraggo i dati dal pacchetto ricevuto
 
     close_socket_udp(sd); //chiudo la socket udp
     close_socket_icmp(sd2); //chiudo la socket raw icmp

@@ -9,6 +9,7 @@
 #include <netinet/in.h> //necessaria per le strutture di rete
 #include <netdb.h> //necessaria per le funzioni di risoluzione DNS
 #include <sys/types.h> //necessaria per estendere i tipi di dato
+#include <netinet/udp.h>
 
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
 

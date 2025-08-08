@@ -12,7 +12,8 @@
 #include <netinet/in.h> //necessaria per le strutture di rete
 #include <netdb.h> //necessaria per le funzioni di risoluzione DNS
 #include <sys/types.h> //necessaria per estendere i tipi di dato
-
+#include <netinet/ip_icmp.h>
+#include <netinet/udp.h>
 
 
 
