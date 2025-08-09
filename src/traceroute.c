@@ -8,6 +8,8 @@
 #include <netinet/in.h> //necessaria per le strutture di rete
 #include <netdb.h> //necessaria per le funzioni di risoluzione DNS
 #include <sys/types.h> //necessaria per estendere i tipi di dato
+#include <time.h> //necessaria per clock_gettime e timespec
+
 
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
 #include "udp.h" //includo il file header per le dichiarazioni delle funzioni udp
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
     int port_rec;
     extract_rec_data(buffer, &addr_extract, addr_string, error, port_rec); //estraggo i dati dal pacchetto ricevuto
     reverse_dns(addr_extract); //faccio il reverse dns dell'indirizzo estratto
+    gettimestamp(); //ottengo il timestamp corrente
 
     close_socket_udp(sd); //chiudo la socket udp
     close_socket_icmp(sd2); //chiudo la socket raw icmp

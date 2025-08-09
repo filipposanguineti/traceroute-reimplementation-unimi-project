@@ -17,6 +17,7 @@ int check_ipv4(char *ip);
 void store_ip(char *ip, struct in_addr *ip_bin);
 char *dns_resolver_ipv4(char *url);
 char *reverse_dns(struct in_addr ip_bin);
+double gettimestamp();
 
 
 #endif 

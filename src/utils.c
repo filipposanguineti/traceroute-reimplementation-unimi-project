@@ -14,6 +14,7 @@
 #include <sys/types.h> //necessaria per estendere i tipi di dato
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
+#include <time.h> //necessaria per clock_gettime e timespec
 
 #define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
@@ -141,12 +142,27 @@ char *reverse_dns(struct in_addr ip_bin){
     int error = getnameinfo((struct sockaddr *)&ip_addr, sizeof(ip_addr), buffer_tmp, sizeof(buffer_tmp), NULL, 0, 0);
 
     if(error != 0) { 
-        fprintf(stderr, "Error resolving IP to URL: %s\n", gai_strerror(error)); //gai_strerror converte l'errore in una stringa leggibile
+        fprintf(stderr, "Error resolving IP to URL\n"); 
         return NULL; 
     }
     strcpy(url, buffer_tmp); //trasferisco l'url
     printf("Resolved IP %s to URL: %s\n", inet_ntoa(ip_bin), url);
 
     return url;
+
+}
+
+
+double gettimestamp(){
+
+    struct timespec ts; //struttura per il timestamp
+    clock_gettime(CLOCK_MONOTONIC, &ts); //prendo il timestamp corrente, uso CLOCK_MONOTONIC per avere un ts indipendente dall'ora del sistema, meglio di CLOCK_REALTIME
+
+    //voglio il risultato in ms ma ho secondoni e nanosecondi, moltiplico per 1000 i secondi e divido i nanosecondi per 1000000
+    double timestamp = ts.tv_sec*1000 + ts.tv_nsec/1000000;
+
+    printf("Current timestamp: %.2f ms\n", timestamp); //stampo il timestamp per testing (.2f è per avere due decimali)
+    return timestamp; //ritorno il timestamp in ms
+
 
 }
