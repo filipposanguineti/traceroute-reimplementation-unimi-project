@@ -9,6 +9,7 @@
 #include <netdb.h> //necessaria per le funzioni di risoluzione DNS
 #include <sys/types.h> //necessaria per estendere i tipi di dato
 #include <time.h> //necessaria per clock_gettime e timespec
+#include <sys/time.h> //necessaria per la struct timeval
 
 
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
@@ -80,7 +81,8 @@ int main(int argc, char *argv[]) {
     int sd = create_socket_udp(); //creo la socket udp
     ttl_increment(sd, 22); 
     stampa_ttl_test(sd); //stampo il ttl della socket
-    send_probe(sd, ip_bin, 22, 0); //invio un probe all'ip con ttl 12 e probe index 0
+    int probe_port; //variabile per la porta del probe
+    send_probe(sd, ip_bin, 22, 0, &probe_port); //invio un probe all'ip con ttl 12 e probe index 0
 
     int sd2 = create_socket_raw_icmp(); //creo la socket raw icmp
     char buffer[BUFFER_SIZE]; //creo un buffer per ricevere i pacchetti icmp
@@ -117,6 +119,57 @@ void test_stampa_ip(struct in_addr ip_bin, char *ip_string) {
     }
     printf("Binary IP: %s\n", ip_str);
     printf("In string format: %s\n", ip_string); //stampo l'ip in formato stringa
+
+}
+
+
+
+int trace(struct in_addr dest){
+
+    //funzione principale che gestisce tutto il traceroute, e il doppio ciclo for
+
+    //inizio dichiarando le variabili necessarie
+    int udp_sd; //creo la socket udp
+    int icmp_sd; //creo la socket raw icmp
+    int ttl = 1; //il ttl parte da 1
+    int probe = 0; //indice del probe, parte da 0 così da calcoare la porta di destinazione e distinguere i prbe
+    int send_port; //porta calcolata all'invio del pacchetto udp
+    int max_ttl = 30; //traceroute si spinge fino a 30 hop, quindi non vado oltre
+    char reply[BUFFER_SIZE]; //buffer per la risposta icmp
+    struct in_addr reply_addr; //la struct per l'indirizzo da cui ho ricevuto risposta
+    char reply_addr_string[INET_ADDRSTRLEN]; //buffer per la conversione da binario a string
+    int icmp_error_code; //codice di errore ricevuto in icmp
+    int reply_port; //porta del probe che ha ricevuto la risposta, per ritrovare il probe giusto
+    double ts0; //timestamp del probe
+    double ts1; //timestamp della risposta
+
+
+    udp_sd = create_socket_udp();
+    icmp_sd = create_socket_raw_icmp();
+
+    for(ttl = 1; ttl <= max_ttl; ttl++){
+
+        ttl_increment(udp_sd, ttl); //setto il ttl nella socket udp
+
+        for(probe = 0; probe < 3; probe++){
+
+            ts0 = gettimestamp(); //prendo il timestamp prima di inviare il probe
+            send_probe(udp_sd, dest, ttl, probe, &send_port); //invio il probe
+
+            //volendo usare la select, devo gestire il timeout e settare alcune variabili
+            struct timeval timeout;
+            timeout.tv_sec = 2; //metto un timeout di 2 secondi
+            timeout.tv_usec = 0; //microsecondi a 0
+
+            fd_set read_fds; //creo il set di file descriptor che la select monitora
+            FD_ZERO(&read_fds); //inizializzo il set a zero
+            FD_SET(icmp_sd, &read_fds); //aggiungo la socket icmp
+
+
+        }
+    }
+
+
 
 }
 

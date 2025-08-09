@@ -67,16 +67,16 @@ int ttl_increment(int sd, int ttl){
 }
 
 
-int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index){
+int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *port){
 
     //creo la struttura sockaddr_in per il destinatario
-    int port = 33434 + ttl + probe_index;
+    *port = 33434 + ttl + probe_index;
     struct sockaddr_in dest;
     memset(&dest, 0, sizeof(dest)); 
 
     dest.sin_family = AF_INET; //imposto la famiglia di indirizzi
     dest.sin_addr = ip_bin; //imposto l'indirizzo di destinazione
-    dest.sin_port = htons(port); //imposto la porta di destinazione con cui identificherò le risposte
+    dest.sin_port = htons(*port); //imposto la porta di destinazione con cui identificherò le risposte
 
     //mando il pacchetto, lo lascio vuoto per comodità
     int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest)); //nessun buffer, quindi len 0, nessuna opzione quindi 0
