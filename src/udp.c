@@ -85,7 +85,7 @@ int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *por
         fprintf(stderr, "Error sending probe.\n");
         return -1;
     }else {
-        printf("Probe sent to %s on port %d with TTL %d\n", inet_ntoa(ip_bin), port, ttl); //inet_ntoa è simile a inet_ntop ma più rudimentale e meno sicuro, non alloca dinamicamnete la memoria
+        printf("Probe sent to %s on port %d with TTL %d\n", inet_ntoa(ip_bin), *port, ttl); //inet_ntoa è simile a inet_ntop ma più rudimentale e meno sicuro, non alloca dinamicamnete la memoria
         return 0;
     }
 

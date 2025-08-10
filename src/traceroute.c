@@ -15,16 +15,12 @@
 #include "utils.h" //includo il file header per le dichiarazioni delle funzioni
 #include "udp.h" //includo il file header per le dichiarazioni delle funzioni udp
 #include "icmp.h" //includo il file header per le dichiarazioni delle funzioni icmp
+#include "struct.h"
 
 #define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
 
-//strutture dati
-typedef struct {
-    char ip_string[INET_ADDRSTRLEN]; 
-    double rtt; 
-    char url[BUFFER_SIZE];
-} informations; //è la struttura che passo alla funzione di stampa
+
 
 
 //dichiarazioni funzioni
@@ -162,6 +158,8 @@ int trace(struct in_addr dest){
     for(ttl = 1; ttl <= max_ttl; ttl++){
 
         ttl_increment(udp_sd, ttl); //setto il ttl nella socket udp
+        
+        informations array_probe[3] = {0}; //array di struct per salvare i dati dei probe
 
         for(probe = 0; probe < 3; probe++){
 
@@ -170,12 +168,13 @@ int trace(struct in_addr dest){
             send_probe(udp_sd, dest, ttl, probe, &send_port); //invio il probe
 
             
+            //la struct per i dati la dichiaro qui così da essere azzerata automaticamente
+            informations info;
 
             //metto un ciclo infinito per la select, finché non ha trattato tutte le risposte in coda
             while(1){
 
-                //la struct per i dati la dichiaro qui così da essere azzerata automaticamente
-                informations info;
+                
 
                 //volendo usare la select, devo gestire il timeout e settare alcune variabili
                 struct timeval timeout;
@@ -196,15 +195,11 @@ int trace(struct in_addr dest){
                 if(result < 0){
                     fprintf(stderr, "Error in select.\n");
 
-                    //qui devo chiamare la funzione di stampa (con asterischi)
-
                     break;
 
                 }else if(result == 0) {
                     //se il timeout è scaduto, esco dal ciclo
                     
-
-                    //qui devo chiamare la funzione di stampa (con asterischi)
                     printf("Timeout reached.\n");
                     break;
                 }
@@ -215,7 +210,7 @@ int trace(struct in_addr dest){
                 if(rec < 0) {
                     fprintf(stderr, "Error receiving ICMP packet.\n");
 
-                    //qui devo chiamare la funzione di stampa (con asterischi)
+                    
                     break;
                 }
 
@@ -240,7 +235,7 @@ int trace(struct in_addr dest){
                     
                     info.rtt = (ts1 - ts0) * 1000; //rtt in ms
 
-                    //qui devo chiamare la funzione di stampa
+                    
                 
 
 
@@ -256,17 +251,25 @@ int trace(struct in_addr dest){
                     break; //esco dal ciclo dei probe
                 }
 
-                //qui devo chiamare la funzione di stampa (senza rtt)
+                
 
                 
 
 
             }
 
+            //qui devo creare un array di struct information per salvare il probe corrente
+            array_probe[probe].rtt = info.rtt; //salvo l'rtt
+            strncpy(array_probe[probe].ip_string, info.ip_string, INET_ADDRSTRLEN); //salvo nell'array l'ip del prbe corrente
+            strncpy(array_probe[probe].url, info.url, BUFFER_SIZE); //salvo l'url del probe corrente
+
 
 
 
         }
+
+        //ora devo stampare i risultati dei probe per questo ttl
+
     }
 
     return 0;
