@@ -19,8 +19,17 @@
 #define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
 
+//strutture dati
+typedef struct {
+    char ip_string[INET_ADDRSTRLEN]; 
+    double rtt; 
+    char url[BUFFER_SIZE];
+} informations; //è la struttura che passo alla funzione di stampa
+
+
 //dichiarazioni funzioni
 void test_stampa_ip(struct in_addr ip_bin, char *ip_string);
+int trace(struct in_addr dest);
 
 
 
@@ -78,26 +87,29 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int sd = create_socket_udp(); //creo la socket udp
-    ttl_increment(sd, 22); 
-    stampa_ttl_test(sd); //stampo il ttl della socket
-    int probe_port; //variabile per la porta del probe
-    send_probe(sd, ip_bin, 22, 0, &probe_port); //invio un probe all'ip con ttl 12 e probe index 0
+    // int sd = create_socket_udp(); //creo la socket udp
+    // ttl_increment(sd, 22); 
+    // stampa_ttl_test(sd); //stampo il ttl della socket
+    // int probe_port; //variabile per la porta del probe
+    // send_probe(sd, ip_bin, 22, 0, &probe_port); //invio un probe all'ip con ttl 12 e probe index 0
 
-    int sd2 = create_socket_raw_icmp(); //creo la socket raw icmp
-    char buffer[BUFFER_SIZE]; //creo un buffer per ricevere i pacchetti icmp
-    receive_icmp(sd2, buffer); //ricevo un pacchetto icmp
-    //estraggo i dati dal pacchetto ricevuto
-    struct in_addr addr_extract; //variabile per l'indirizzo estratto
-    char addr_string[INET_ADDRSTRLEN]; //buffer per la conversione da binario a stringa
-    int error;
-    int port_rec;
-    extract_rec_data(buffer, &addr_extract, addr_string, error, port_rec); //estraggo i dati dal pacchetto ricevuto
-    reverse_dns(addr_extract); //faccio il reverse dns dell'indirizzo estratto
-    gettimestamp(); //ottengo il timestamp corrente
+    // int sd2 = create_socket_raw_icmp(); //creo la socket raw icmp
+    // char buffer[BUFFER_SIZE]; //creo un buffer per ricevere i pacchetti icmp
+    // receive_icmp(sd2, buffer); //ricevo un pacchetto icmp
+    // //estraggo i dati dal pacchetto ricevuto
+    // struct in_addr addr_extract; //variabile per l'indirizzo estratto
+    // char addr_string[INET_ADDRSTRLEN]; //buffer per la conversione da binario a stringa
+    // int error;
+    // int port_rec;
+    // extract_rec_data(buffer, &addr_extract, addr_string, &error, &port_rec); //estraggo i dati dal pacchetto ricevuto
+    // printf("Extracted IP: %s, Error Code: %d, Port: %d\n", addr_string, error, port_rec); //stampo i dati estratti
+    // reverse_dns(addr_extract); //faccio il reverse dns dell'indirizzo estratto
+    // gettimestamp(); //ottengo il timestamp corrente
 
-    close_socket_udp(sd); //chiudo la socket udp
-    close_socket_icmp(sd2); //chiudo la socket raw icmp
+    // close_socket_udp(sd); //chiudo la socket udp
+    // close_socket_icmp(sd2); //chiudo la socket raw icmp
+
+    trace(ip_bin); //chiamo la funzione trace con l'ip binario
 
     
     
@@ -153,23 +165,111 @@ int trace(struct in_addr dest){
 
         for(probe = 0; probe < 3; probe++){
 
+            printf("Sending probe %d with TTL %d\n", probe, ttl);
             ts0 = gettimestamp(); //prendo il timestamp prima di inviare il probe
             send_probe(udp_sd, dest, ttl, probe, &send_port); //invio il probe
 
-            //volendo usare la select, devo gestire il timeout e settare alcune variabili
-            struct timeval timeout;
-            timeout.tv_sec = 2; //metto un timeout di 2 secondi
-            timeout.tv_usec = 0; //microsecondi a 0
+            
 
-            fd_set read_fds; //creo il set di file descriptor che la select monitora
-            FD_ZERO(&read_fds); //inizializzo il set a zero
-            FD_SET(icmp_sd, &read_fds); //aggiungo la socket icmp
+            //metto un ciclo infinito per la select, finché non ha trattato tutte le risposte in coda
+            while(1){
+
+                //la struct per i dati la dichiaro qui così da essere azzerata automaticamente
+                informations info;
+
+                //volendo usare la select, devo gestire il timeout e settare alcune variabili
+                struct timeval timeout;
+                timeout.tv_sec = 3; //metto un timeout di 3 secondi
+                timeout.tv_usec = 0; //microsecondi a 0
+
+                fd_set read_fds; //creo il set di file descriptor che la select monitora
+                FD_ZERO(&read_fds); //inizializzo il set a zero
+                FD_SET(icmp_sd, &read_fds); //aggiungo la socket icmp al set
+
+                int result = select(icmp_sd + 1, &read_fds, NULL, NULL, &timeout); //chiamo la select
+
+                //setto di default la struct info come se non avesse trovato risultato
+                info.rtt = -1;
+                strncpy(info.ip_string, "*", INET_ADDRSTRLEN); //setto *
+                strncpy(info.url, "*", BUFFER_SIZE); //setto * per l'url
+
+                if(result < 0){
+                    fprintf(stderr, "Error in select.\n");
+
+                    //qui devo chiamare la funzione di stampa (con asterischi)
+
+                    break;
+
+                }else if(result == 0) {
+                    //se il timeout è scaduto, esco dal ciclo
+                    
+
+                    //qui devo chiamare la funzione di stampa (con asterischi)
+                    printf("Timeout reached.\n");
+                    break;
+                }
+
+                //se la select ha trovato qualcosa da leggere, leggo dalla socket icmp
+                memset(reply, 0, BUFFER_SIZE); //azzero il buffer di risposta
+                int rec = receive_icmp(icmp_sd, reply); //ricevo un pacchetto icmp
+                if(rec < 0) {
+                    fprintf(stderr, "Error receiving ICMP packet.\n");
+
+                    //qui devo chiamare la funzione di stampa (con asterischi)
+                    break;
+                }
+
+                //estraggo i dati dal pacchetto ricevuto
+                extract_rec_data(reply, &reply_addr, reply_addr_string, &icmp_error_code, &reply_port);
+                reverse_dns(reply_addr); //faccio il reverse dns dell'indirizzo di risposta
+
+                //se sono arrivato fin qui significa che ho ricevuto una risposta valida
+                //setto la struct info con i dati ricevuto (tranne rtt che calcolo solo se riesco ad accoppiare invio e ricezione)
+                strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
+                strncpy(info.url, reply_addr_string, BUFFER_SIZE); //salvo l'indirizzo della risposta
+                
+
+                if(send_port == reply_port) {
+                    //se la porta del probe corrisponde a quella della risposta, ho trovato il probe giusto
+                    ts1 = gettimestamp(); //prendo il timestamp della risposta
+                    printf("TTL: %d, Probe: %d, IP: %s, Port: %d, RTT: %.3f ms\n", ttl, probe, reply_addr_string, reply_port, (ts1 - ts0) * 1000);
+                    
+
+
+                    //aggiungo alla struct l'rtt'
+                    
+                    info.rtt = (ts1 - ts0) * 1000; //rtt in ms
+
+                    //qui devo chiamare la funzione di stampa
+                
+
+
+                    if(icmp_error_code == 3) {
+                        //se il codice di errore è 3, ho raggiunto l'host di destinazione
+                        printf("Reached destination: %s\n", reply_addr_string);
+                        close_socket_udp(udp_sd); //chiudo la socket udp
+                        close_socket_icmp(icmp_sd); //chiudo la socket icmp
+                        return 0; //esco dalla funzione
+                    }
+
+
+                    break; //esco dal ciclo dei probe
+                }
+
+                //qui devo chiamare la funzione di stampa (senza rtt)
+
+                
+
+
+            }
+
+
 
 
         }
     }
 
-
+    return 0;
 
 }
 
