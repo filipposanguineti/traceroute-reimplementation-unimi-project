@@ -12,10 +12,13 @@
 #include <netinet/in.h> //necessaria per le strutture di rete
 #include <netdb.h> //necessaria per le funzioni di risoluzione DNS
 #include <sys/types.h> //necessaria per estendere i tipi di dato
+#include "struct.h" //includo il file header per le dichiarazioni delle strutture
 
 
 
-void print_line(struct information *array);
+void print_line(informations *array, int hop_number);
+void print_intro(char *ip, char *url);
+void print_numbers(int hop_number);
 
 
 #endif

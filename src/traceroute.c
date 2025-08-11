@@ -16,6 +16,7 @@
 #include "udp.h" //includo il file header per le dichiarazioni delle funzioni udp
 #include "icmp.h" //includo il file header per le dichiarazioni delle funzioni icmp
 #include "struct.h"
+#include "print.h"
 
 #define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
@@ -104,7 +105,9 @@ int main(int argc, char *argv[]) {
 
     // close_socket_udp(sd); //chiudo la socket udp
     // close_socket_icmp(sd2); //chiudo la socket raw icmp
-
+    char buffer[INET_ADDRSTRLEN]; //buffer per la conversione da binario a stringa
+    inet_ntop(AF_INET, &ip_bin, buffer, sizeof(buffer));
+    print_intro(buffer, argv[1]); //stampo l'intro con l'ip e l'url
     trace(ip_bin); //chiamo la funzione trace con l'ip binario
 
     
@@ -150,6 +153,7 @@ int trace(struct in_addr dest){
     int reply_port; //porta del probe che ha ricevuto la risposta, per ritrovare il probe giusto
     double ts0; //timestamp del probe
     double ts1; //timestamp della risposta
+    int hop_number = 0; //numero di ho che mi serirà nella stampa di ognuno di essi
 
 
     udp_sd = create_socket_udp();
@@ -233,7 +237,7 @@ int trace(struct in_addr dest){
 
                     //aggiungo alla struct l'rtt'
                     
-                    info.rtt = (ts1 - ts0) * 1000; //rtt in ms
+                    info.rtt = ts1 - ts0; //rtt in ms
 
                     
                 
@@ -269,6 +273,8 @@ int trace(struct in_addr dest){
         }
 
         //ora devo stampare i risultati dei probe per questo ttl
+        hop_number++; //incremento il numero di hop
+        print_line(array_probe, hop_number); //stampo i risultati dei probe dopo ogni tre probe (ad ogni ttl)
 
     }
 

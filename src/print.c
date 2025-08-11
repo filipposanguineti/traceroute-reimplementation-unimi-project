@@ -16,13 +16,17 @@
 #include "icmp.h" //includo il file header per le dichiarazioni delle funzioni icmp
 #include "traceroute.h" //includo il file header per le dichiarazioni delle funzioni di stampa
 #include "struct.h"
+#include "print.h" //includo il file header per le dichiarazioni delle funzioni di stampa
 
 #define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
 
 
 
 
-void print_line(informations *array){
+void print_line(informations *array, int hop_number){
+
+    //ricevo un array di tre elementi, ciclo e stampo i tre risultati
+    print_numbers(hop_number); //stampo il numero dell'ho corrente
 
     for(int i = 0; i<3; i++){
 
@@ -30,14 +34,15 @@ void print_line(informations *array){
 
         if(array->rtt == -1){
 
-            printf("%s (%s) * ms", array[i].ip_string, array[i].url);
+            printf("%s (%s) * ms\t", array[i].ip_string, array[i].url);
         
         } else{
-            printf("%s (%s) %.2f ms", array[i].ip_string, array[i].url, array[i].rtt);
+            printf("%s (%s) %.2f ms\t", array[i].ip_string, array[i].url, array[i].rtt);
         }
     }
 
-    printf("\n");
+    //aggiungo un \n alla fine per passare alla riga successiva
+    printf("\n\n");
     return;
     
 }
@@ -45,4 +50,10 @@ void print_line(informations *array){
 void print_intro(char *ip, char *url){
 
     printf("Traceroute to %s (%s)", ip, url);
+}
+
+void print_numbers(int hop_number){
+
+    //stampo il numero di hop
+    printf("Hop %d: ", hop_number);
 }
