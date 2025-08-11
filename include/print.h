@@ -19,6 +19,6 @@
 void print_line(informations *array, int hop_number);
 void print_intro(char *ip, char *url);
 void print_numbers(int hop_number);
-
+void print_final(informations end); 
 
 #endif

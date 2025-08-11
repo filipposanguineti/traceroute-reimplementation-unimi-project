@@ -142,11 +142,11 @@ char *reverse_dns(struct in_addr ip_bin){
     int error = getnameinfo((struct sockaddr *)&ip_addr, sizeof(ip_addr), buffer_tmp, sizeof(buffer_tmp), NULL, 0, 0);
 
     if(error != 0) { 
-        fprintf(stderr, "Error resolving IP to URL\n"); 
+        //fprintf(stderr, "Error resolving IP to URL\n"); 
         return NULL; 
     }
     strcpy(url, buffer_tmp); //trasferisco l'url
-    printf("Resolved IP %s to URL: %s\n", inet_ntoa(ip_bin), url);
+    //printf("Resolved IP %s to URL: %s\n", inet_ntoa(ip_bin), url);
 
     return url;
 
@@ -161,7 +161,7 @@ double gettimestamp(){
     //voglio il risultato in ms ma ho secondoni e nanosecondi, moltiplico per 1000 i secondi e divido i nanosecondi per 1000000
     double timestamp = ts.tv_sec*1000 + ts.tv_nsec/1000000;
 
-    printf("Current timestamp: %.2f ms\n", timestamp); //stampo il timestamp per testing (.2f è per avere due decimali)
+    //printf("Current timestamp: %.2f ms\n", timestamp); //stampo il timestamp per testing (.2f è per avere due decimali)
     return timestamp; //ritorno il timestamp in ms
 
 

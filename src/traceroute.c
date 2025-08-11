@@ -167,7 +167,7 @@ int trace(struct in_addr dest){
 
         for(probe = 0; probe < 3; probe++){
 
-            printf("Sending probe %d with TTL %d\n", probe, ttl);
+            //printf("Sending probe %d with TTL %d\n", probe, ttl);
             ts0 = gettimestamp(); //prendo il timestamp prima di inviare il probe
             send_probe(udp_sd, dest, ttl, probe, &send_port); //invio il probe
 
@@ -204,7 +204,7 @@ int trace(struct in_addr dest){
                 }else if(result == 0) {
                     //se il timeout è scaduto, esco dal ciclo
                     
-                    printf("Timeout reached.\n");
+                    //printf("Timeout reached.\n");
                     break;
                 }
 
@@ -220,22 +220,22 @@ int trace(struct in_addr dest){
 
                 //estraggo i dati dal pacchetto ricevuto
                 extract_rec_data(reply, &reply_addr, reply_addr_string, &icmp_error_code, &reply_port);
-                reverse_dns(reply_addr); //faccio il reverse dns dell'indirizzo di risposta
+                char *url_translated = reverse_dns(reply_addr); //faccio il reverse dns dell'indirizzo di risposta
 
                 //se sono arrivato fin qui significa che ho ricevuto una risposta valida
                 //setto la struct info con i dati ricevuto (tranne rtt che calcolo solo se riesco ad accoppiare invio e ricezione)
                 strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
-                strncpy(info.url, reply_addr_string, BUFFER_SIZE); //salvo l'indirizzo della risposta
+                strncpy(info.url, url_translated, BUFFER_SIZE); //salvo l'indirizzo della risposta
                 
 
                 if(send_port == reply_port) {
                     //se la porta del probe corrisponde a quella della risposta, ho trovato il probe giusto
                     ts1 = gettimestamp(); //prendo il timestamp della risposta
-                    printf("TTL: %d, Probe: %d, IP: %s, Port: %d, RTT: %.3f ms\n", ttl, probe, reply_addr_string, reply_port, (ts1 - ts0) * 1000);
+                    //printf("TTL: %d, Probe: %d, IP: %s, Port: %d, RTT: %.3f ms\n", ttl, probe, reply_addr_string, reply_port, (ts1 - ts0) * 1000);
                     
 
 
-                    //aggiungo alla struct l'rtt'
+                    //aggiungo alla struct l'rtt
                     
                     info.rtt = ts1 - ts0; //rtt in ms
 
@@ -245,7 +245,8 @@ int trace(struct in_addr dest){
 
                     if(icmp_error_code == 3) {
                         //se il codice di errore è 3, ho raggiunto l'host di destinazione
-                        printf("Reached destination: %s\n", reply_addr_string);
+                        //printf("Reached destination: %s\n", reply_addr_string);
+                        print_final(info); //stampo il risultato finale
                         close_socket_udp(udp_sd); //chiudo la socket udp
                         close_socket_icmp(icmp_sd); //chiudo la socket icmp
                         return 0; //esco dalla funzione

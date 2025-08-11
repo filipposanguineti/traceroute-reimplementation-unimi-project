@@ -30,7 +30,7 @@ int create_socket_raw_icmp(){
         return -1; 
 
     }else {
-        printf("Raw ICMP socket created successfully: %d\n", sd);
+        //printf("Raw ICMP socket created successfully: %d\n", sd);
         return sd;
     }
     //la bind non serve perché icmp non opera sulle porte (è a livello 3)
@@ -48,7 +48,7 @@ int receive_icmp(int sd, char *buffer){
         fprintf(stderr, "Error receiving ICMP packet.\n");
         return -1;
     }else {
-        printf("ICMP packet received from %s\n", inet_ntoa(reply_addr.sin_addr)); //stampo l'indirizzo di chi mi ha risposto
+        //printf("ICMP packet received from %s\n", inet_ntoa(reply_addr.sin_addr)); //stampo l'indirizzo di chi mi ha risposto
         return 0;
     }
 
@@ -77,7 +77,7 @@ int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int *e
         fprintf(stderr, "Error converting binary IP to string.\n");
         return -1; //ritorno -1 in caso di errore
     }
-    printf("Extracted IP address: %s\n", addr_string); //stampo per testing
+    //printf("Extracted IP address: %s\n", addr_string); //stampo per testing
 
 
     //estrazione type
@@ -86,7 +86,7 @@ int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int *e
     struct icmphdr *icmp_header = (struct icmphdr *) (data + ip_lenght); //devo castare a icmphdr per poter leggere correttamente i campi, sommando data all'header ip arrivo a quello icmp
     int type = icmp_header->type; //estraggo il type
     *error = icmp_header->code; //estraggo il code
-    printf("ICMP Type: %d, Code: %d\n", type, *error); //stampo per testing
+    //printf("ICMP Type: %d, Code: %d\n", type, *error); //stampo per testing
 
     //estrazione porta
     //siccome prima di udp c'è un altro header ip (quello mio originale del probe), devo calcolarne la lunghezza e superarlo. Per superare icmp basta aggiungere 8 byte (icmp ha una lunghezza fissa)
@@ -96,7 +96,7 @@ int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int *e
     //ora posso andare all'header udp
     struct udphdr *udp_header = (struct udphdr *) (data + ip_lenght + sizeof(struct icmphdr) + ip_probe_length); //uso il sizeof al posto di 8 byte
     *port = ntohs(udp_header->dest); //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
-    printf("UDP Port: %d\n", *port); //stampo per testing
+    //printf("UDP Port: %d\n", *port); //stampo per testing
 
 
     return 0;
@@ -112,7 +112,7 @@ int close_socket_icmp(int sd){
         return -1; //ritorno -1 in caso di errore
 
     }else {
-        printf("ICMP socket closed successfully.\n");
+        //printf("ICMP socket closed successfully.\n");
         return 0;
     }
 

@@ -34,26 +34,31 @@ void print_line(informations *array, int hop_number){
 
         if(array->rtt == -1){
 
-            printf("%s (%s) * ms\t", array[i].ip_string, array[i].url);
+            printf("%s (%s) * ms\t\t", array[i].ip_string, array[i].url);
         
         } else{
-            printf("%s (%s) %.2f ms\t", array[i].ip_string, array[i].url, array[i].rtt);
+            printf("%s (%s) %.2f ms\t\t", array[i].ip_string, array[i].url, array[i].rtt);
         }
     }
 
     //aggiungo un \n alla fine per passare alla riga successiva
-    printf("\n\n");
+    printf("\n");
     return;
     
 }
 
 void print_intro(char *ip, char *url){
 
-    printf("Traceroute to %s (%s)", ip, url);
+    printf("Traceroute to %s (%s)\n", ip, url);
 }
 
 void print_numbers(int hop_number){
 
     //stampo il numero di hop
     printf("Hop %d: ", hop_number);
+}
+
+void print_final(informations end){
+
+    printf("Reached destination: %s (%s) %.2f ms\n", end.ip_string, end.url, end.rtt);
 }
