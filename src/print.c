@@ -42,7 +42,8 @@ void print_line(informations *array, int hop_number){
     }
 
     //aggiungo un \n alla fine per passare alla riga successiva
-    printf("\n");
+    printf("");
+    printf("\n"); 
     return;
     
 }
