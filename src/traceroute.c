@@ -59,8 +59,7 @@ int main(int argc, char *argv[]) {
 
         printf("Valid IPv4 address provided: %s\n", argv[1]);
 
-        //test di stampa
-        test_stampa_ip(ip_bin, ip_string);
+        
     
     }else if(check_ipv4(argv[1]) == 0) {
 

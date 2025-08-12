@@ -34,10 +34,10 @@ void print_line(informations *array, int hop_number){
 
         if(array->rtt == -1){
 
-            printf("%s (%s) * ms\t\t", array[i].ip_string, array[i].url);
+            printf("[%s (%s) * ms]\t\t", array[i].ip_string, array[i].url);
         
         } else{
-            printf("%s (%s) %.2f ms\t\t", array[i].ip_string, array[i].url, array[i].rtt);
+            printf("[%s (%s) %.2f ms]\t\t", array[i].ip_string, array[i].url, array[i].rtt);
         }
     }
 
