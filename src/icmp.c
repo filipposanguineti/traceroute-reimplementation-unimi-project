@@ -1,23 +1,23 @@
 
-#define _POSIX_C_SOURCE 200112L // Definisce macro per POSIX, necessaria per alcune funzioni di rete
-#define GNU_SOURCE 1// Definisce macro per GNU, necessaria per alcune funzioni di rete
-#define _DEFAULT_SOURCE 1 // Definisce macro per le funzioni di rete, necessaria per compatibilità con C17
+#define _POSIX_C_SOURCE 200112L     // Definisce macro per POSIX, necessaria per alcune funzioni di rete
+#define GNU_SOURCE 1                // Definisce macro per GNU, necessaria per alcune funzioni di rete
+#define _DEFAULT_SOURCE 1           // Definisce macro per le funzioni di rete, necessaria per compatibilità con C17
 #include <stdio.h>
-#include <unistd.h> //è necessaria per usare geteuid()
-#include <arpa/inet.h> //necessaria per usare le funzioni di rete
+#include <unistd.h>                 //è necessaria per usare geteuid()
+#include <arpa/inet.h>              //necessaria per usare le funzioni di rete
 #include <string.h>
 #include <stdlib.h>
-#include <sys/socket.h> //necessaria per le funzioni di socket
-#include <netinet/in.h> //necessaria per le strutture di rete
-#include <netdb.h> //necessaria per le funzioni di risoluzione DNS
-#include <sys/types.h> //necessaria per estendere i tipi di dato
+#include <sys/socket.h>             //necessaria per le funzioni di socket
+#include <netinet/in.h>             //necessaria per le strutture di rete
+#include <netdb.h>                  //necessaria per le funzioni di risoluzione DNS
+#include <sys/types.h>              //necessaria per estendere i tipi di dato
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
 
 
-#include "utils.h" //includo il file header per le dichiarazioni delle funzioni
+#include "utils.h"                  //includo il file header per le dichiarazioni delle funzioni
 
-#define BUFFER_SIZE 1500 // Definisco una costante per la dimensione del buffer
+#define BUFFER_SIZE 1500            // Definisco una costante per la dimensione del buffer
 
 
 
@@ -26,33 +26,39 @@ int create_socket_raw_icmp(){
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 
     if(sd < 0) {
+
         fprintf(stderr, "Error creating raw ICMP socket.\n");
         return -1; 
 
     }else {
-        //printf("Raw ICMP socket created successfully: %d\n", sd);
+
         return sd;
     }
+    
     //la bind non serve perché icmp non opera sulle porte (è a livello 3)
+
 }
 
 
 int receive_icmp(int sd, char *buffer){
 
-    struct sockaddr_in reply_addr; //struttura vuota che conterrà l'indirizzo di chi mi ha risposto
-    socklen_t addr_len = sizeof(reply_addr); //lunghezza della struttura (per la recvfrom mi serve il tipo socklen_t)
+    struct sockaddr_in reply_addr;              //struttura vuota che conterrà l'indirizzo di chi mi ha risposto
+    socklen_t addr_len = sizeof(reply_addr);    //lunghezza della struttura (per la recvfrom mi serve il tipo socklen_t)
 
-    int received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); //passo sd, il buffer, la sua dimensione, il flag 0 per nessuna opzione, indirizzo vuoto creato prima e la sua dimensione
+    //passo sd, il buffer, la sua dimensione, il flag 0 per nessuna opzione, indirizzo vuoto creato prima e la sua dimensione
+    int received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
 
     if(received < 0) {
+
         fprintf(stderr, "Error receiving ICMP packet.\n");
         return -1;
+
     }else {
-        //printf("ICMP packet received from %s\n", inet_ntoa(reply_addr.sin_addr)); //stampo l'indirizzo di chi mi ha risposto
+        
         return 0;
     }
 
-    //il buffer dovrebbe essere pieno e può essere gestito dalla funzione in carica
+    //il buffer dovrebbe essere pieno e può essere gestito dalla funzione di estrazione
 }
 
 
@@ -68,35 +74,48 @@ int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int *e
 
     //mi devo muovere in ordine, saltando da un header all'altro fino ad arrivare in fondo
 
-    //estrazione ip
+
+
+    //ESTRAZIONE IP
+
     //dentro la struct iphdr c'è il campo saddr che contiene l'indirizzo IP del mittente, il valore è big-endian 
-    struct iphdr *ip_header = (struct iphdr *) data; //devo castare a iphdr per poter leggere correttamente i campi
-    addr->s_addr = ip_header->saddr; //metto l'ip dentro s-addr perché è il campo che lo deve contenere (diverso da inet_pton a cui si passa semplicemente la struct in_addr)
 
-    if(inet_ntop(AF_INET, addr, addr_string, INET_ADDRSTRLEN) == NULL) { //converto l'indirizzo IP binario in stringa
+    struct iphdr *ip_header = (struct iphdr *) data;    //devo castare a iphdr per poter leggere correttamente i campi
+    addr->s_addr = ip_header->saddr;                    //metto l'ip dentro s-addr perché è il campo che lo deve contenere (diverso da inet_pton a cui si passa semplicemente la struct in_addr)
+
+    if(inet_ntop(AF_INET, addr, addr_string, INET_ADDRSTRLEN) == NULL) { 
+           //converto l'indirizzo IP binario in stringa
         fprintf(stderr, "Error converting binary IP to string.\n");
-        return -1; //ritorno -1 in caso di errore
+        return -1;
+    
     }
-    //printf("Extracted IP address: %s\n", addr_string); //stampo per testing
+    
 
 
-    //estrazione type
+    //ESTRAZIONE TYPE E CODE
+
     //per trovare l'inizio dell'header icmp, devo saltare oltre quello ip. Devo recuperare il campo ihl dell'header ip e moltiplicarlo per 4 per esprimerlo in bytes (perché conta con 32bit ovvero 4 bytes)
-    int ip_lenght = ip_header->ihl * 4; 
-    struct icmphdr *icmp_header = (struct icmphdr *) (data + ip_lenght); //devo castare a icmphdr per poter leggere correttamente i campi, sommando data all'header ip arrivo a quello icmp
-    int type = icmp_header->type; //estraggo il type
-    *error = icmp_header->code; //estraggo il code
-    //printf("ICMP Type: %d, Code: %d\n", type, *error); //stampo per testing
 
-    //estrazione porta
+    int ip_lenght = ip_header->ihl * 4; 
+
+    struct icmphdr *icmp_header = (struct icmphdr *) (data + ip_lenght);    //devo castare a icmphdr per poter leggere correttamente i campi, sommando data all'header ip arrivo a quello icmp
+    int type = icmp_header->type;                                           //estraggo il type
+    *error = icmp_header->code;                                             //estraggo il code
+    
+
+
+    //ESTRAZIONE PORTA
+
     //siccome prima di udp c'è un altro header ip (quello mio originale del probe), devo calcolarne la lunghezza e superarlo. Per superare icmp basta aggiungere 8 byte (icmp ha una lunghezza fissa)
+
     struct iphdr *ip_header_probe = (struct iphdr *) (data + ip_lenght + sizeof(struct icmphdr)); 
-    int ip_probe_length = ip_header_probe->ihl * 4; //calcolo la lunghezza dell'header ip del probe
+
+    int ip_probe_length = ip_header_probe->ihl * 4;                         //calcolo la lunghezza dell'header ip del probe
 
     //ora posso andare all'header udp
     struct udphdr *udp_header = (struct udphdr *) (data + ip_lenght + sizeof(struct icmphdr) + ip_probe_length); //uso il sizeof al posto di 8 byte
+
     *port = ntohs(udp_header->dest); //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
-    //printf("UDP Port: %d\n", *port); //stampo per testing
 
 
     return 0;
@@ -109,10 +128,10 @@ int close_socket_icmp(int sd){
     int status = close(sd); 
     if(status < 0) {
         fprintf(stderr, "Error closing ICMP socket.\n");
-        return -1; //ritorno -1 in caso di errore
+        return -1; 
 
     }else {
-        //printf("ICMP socket closed successfully.\n");
+        
         return 0;
     }
 
