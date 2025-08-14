@@ -212,10 +212,10 @@ int trace(struct in_addr dest){
                 char *url_translated = reverse_dns(reply_addr);     //faccio il reverse dns dell'indirizzo di risposta
 
 
-                //se sono arrivato fin qui significa che ho ricevuto una risposta valida
-                //setto la struct info con i dati ricevuto (tranne rtt che calcolo solo se riesco ad accoppiare invio e ricezione)
-                strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
-                strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
+                // //se sono arrivato fin qui significa che ho ricevuto una risposta valida
+                // //setto la struct info con i dati ricevuto (tranne rtt che calcolo solo se riesco ad accoppiare invio e ricezione)
+                // strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
+                // strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
                 
 
                 if(send_port == reply_port) {
@@ -226,6 +226,11 @@ int trace(struct in_addr dest){
 
                     //aggiungo alla struct l'rtt
                     info.rtt = ts1 - ts0; //rtt caloclato come ts di arrivo - ts di partenza
+
+                    //se sono arrivato fin qui significa che ho ricevuto una risposta valida
+                    //setto la struct info con i dati ricevuto 
+                    strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
+                    strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
 
 
                     //controllo se sono arrivato alla fine (codice errore 3)
