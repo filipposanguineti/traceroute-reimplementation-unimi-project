@@ -70,7 +70,11 @@ int ttl_increment(int sd, int ttl){
 int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *port){
 
     //creo la struttura sockaddr_in per il destinatario
-    *port = 33434 + ttl + probe_index;
+    
+    //la porta deve essere univoca per ogni probe di ogni ttl. Se sommassi solo base+ttl+index potrei avere delle sovrapposizioni
+    //uso quindi una formula standard che usando la moltiplicazione assicura l'univocita della porta
+    //base + (ttl-1)*numero_di_probe + probe_index (il ttl-1 serve per parire dalla base, ma non è necessario, va bene anche ttl)
+    *port = 33434 + (ttl-1)*3 + probe_index;
 
     struct sockaddr_in dest;
     memset(&dest, 0, sizeof(dest)); 
