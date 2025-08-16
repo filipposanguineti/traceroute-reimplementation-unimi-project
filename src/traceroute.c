@@ -164,7 +164,7 @@ int trace(struct in_addr dest){
 
             
             //la struct per i dati la dichiaro qui così da essere azzerata automaticamente ad ogni invio
-            informations info;
+            informations info = {0};                                         
 
             //metto un ciclo infinito per la select, finché non ha trattato tutte le risposte in coda
             while(1){
@@ -251,6 +251,7 @@ int trace(struct in_addr dest){
 
             }
 
+            
             //qui devo creare un array di struct informations per salvare il probe corrente
             array_probe[probe].rtt = info.rtt;                                          //salvo l'rtt
             strncpy(array_probe[probe].ip_string, info.ip_string, INET_ADDRSTRLEN);     //salvo nell'array l'ip del prbe corrente
