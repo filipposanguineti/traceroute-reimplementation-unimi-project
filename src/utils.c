@@ -14,22 +14,59 @@
 #include <sys/types.h>                  //necessaria per estendere i tipi di dato
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
-#include <time.h>                       //necessaria per clock_gettime e timespec
+#include <time.h>                       //necessaria per clock_gettime e timespec   
+#include <netinet/in.h>                    
 
 #define BUFFER_SIZE 1500                //definisco una costante per la dimensione del buffer
 
 
 
 
-int check_ipv4(char *ip){
+int check_ipv4(char *ip, struct in_addr *ip_bin){
 
-    struct in_addr buffer;                          //mi serve per permettere a inetpton di operare sull'ip con un buffer che ha la taglia di un ipv4
 
-    int val = inet_pton(AF_INET, ip, &buffer);      //converte l'ip in un formato binario e salva il status code in val
+    int val = inet_pton(AF_INET, ip, ip_bin);      //converte l'ip in un formato binario e salva il status code in val
 
-                                                    //se val è 1: ip valido
-                                                    //se val è 0: ip non valido
-                                                    //se val è -1: errore
+    if(val == 1) {
+
+        //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
+        store_ip(ip, ip_bin);   //salvo l'ip in formato binario, passando la variabile per argomento
+
+        printf("Valid IPv4 address provided: %s\n", ip);
+
+        
+    
+    }else if(val == 0) {
+
+        //devo risolvere l'url in un ip
+        printf("Not valid IPv4 address, resolving URL: %s\n", ip);
+
+        char *resolved_ip = dns_resolver_ipv4(ip);     //risolvo l'url in un ip
+
+        //salvo l'ip
+        if(resolved_ip == NULL) {
+
+            fprintf(stderr, "Error resolving URL to IP.\n");
+            return 1;
+
+        }
+
+        store_ip(resolved_ip, ip_bin);                     //salvo l'ip in formato binario, passando la variabile per argomento
+
+
+        //alla fine libero la memoria di resolved_ip
+        free(resolved_ip);
+
+    }else{
+
+        fprintf(stderr, "Error in checking IP address.\n");
+        return 1;
+
+    }
+
+    //se val è 1: ip valido
+    //se val è 0: ip non valido
+    //se val è -1: errore
 
     return val;
 
