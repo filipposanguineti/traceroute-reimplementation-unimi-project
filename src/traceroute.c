@@ -52,47 +52,33 @@ int main(int argc, char *argv[]) {
     }
 
 
+
+
+
+
+    if(argc < 3){
+
+
+
+
+
+
+        //IPV4
+    }else if(strcmp(argv[2], "-ipv6") == 0){
+
+        //IPV6
+        printf("IPv6 support is not implemented yet.\n");
+        struct in6_addr ip_bin_6; //in6-addr è il cugino di in-addr ma per ipv6
+        check_ipv6(argv[1], &ip_bin_6); 
+        return 0;
+
+    }
+
+
     //controllo se l'utente ha fornito un ip o un url
     struct in_addr ip_bin;              //questa è la variabile in cui si salverà l'ip da usare nelle socket
     check_ipv4(argv[1], &ip_bin); //chiamo la funzione check_ipv4 per verificare se l'ip è valido o se è un url da risolvere
 
-    // if(check_ipv4(argv[1]) == 1) {
-
-    //     //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
-    //     char *ip_string = argv[1];      //la stringa
-    //     store_ip(ip_string, &ip_bin);   //salvo l'ip in formato binario, passando la variabile per argomento
-
-    //     printf("Valid IPv4 address provided: %s\n", argv[1]);
-
-        
-    
-    // }else if(check_ipv4(argv[1]) == 0) {
-
-    //     //devo risolvere l'url in un ip
-    //     printf("Not valid IPv4 address, resolving URL: %s\n", argv[1]);
-
-    //     char *resolved_ip = dns_resolver_ipv4(argv[1]);     //risolvo l'url in un ip
-
-    //     //salvo l'ip
-    //     if(resolved_ip == NULL) {
-
-    //         fprintf(stderr, "Error resolving URL to IP.\n");
-    //         return 1;
-
-    //     }
-
-    //     store_ip(resolved_ip, &ip_bin);                     //salvo l'ip in formato binario, passando la variabile per argomento
-
-
-    //     //alla fine libero la memoria di resolved_ip
-    //     free(resolved_ip);
-
-    // }else{
-
-    //     fprintf(stderr, "Error in checking IP address.\n");
-    //     return 1;
-
-    // }
 
     //TRACEROUTE
 

@@ -18,6 +18,9 @@ void store_ip(char *ip, struct in_addr *ip_bin);
 char *dns_resolver_ipv4(char *url);
 char *reverse_dns(struct in_addr ip_bin);
 double gettimestamp();
+int check_ipv6(char *ip, struct in6_addr *ip_bin);
+char *dns_resolver_ipv6(char *url);
+
 
 
 #endif 

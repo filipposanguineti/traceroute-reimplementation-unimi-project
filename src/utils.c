@@ -209,3 +209,103 @@ double gettimestamp(){
 
 
 }
+
+
+
+
+
+//FUNZIONI IPV6
+
+int check_ipv6(char *ip, struct in6_addr *ip_bin){
+
+    int val = inet_pton(AF_INET6, ip, ip_bin);      //converte l'ip in un formato binario e salva il status code in val
+
+    if(val == 1) {
+
+        //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
+        //store_ipv6(ip, ip_bin);   //salvo l'ip in formato binario, passando la variabile per argomento
+
+        printf("Valid IPv6 address provided: %s\n", ip);
+
+        
+    
+    }else if(val == 0) {
+
+        //devo risolvere l'url in un ip
+        printf("Not valid IPv6 address, resolving URL: %s\n", ip);
+
+        char *resolved_ip = dns_resolver_ipv6(ip);     //risolvo l'url in un ip
+
+        //salvo l'ip
+        if(resolved_ip == NULL) {
+
+            fprintf(stderr, "Error resolving URL to IP.\n");
+            return 1;
+
+        }
+
+        //store_ipv6(resolved_ip, ip_bin);                     //salvo l'ip in formato binario, passando la variabile per argomento
+
+    }else {
+
+        fprintf(stderr, "Error in checking IP address.\n");
+        return 1;
+
+    }
+
+
+}
+
+char *dns_resolver_ipv6(char *url){
+
+    struct addrinfo hints; 
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_INET6;                                      //specifico ipv6
+    hints.ai_socktype = SOCK_DGRAM;                                 //specifico socket udp
+
+    struct addrinfo *result;
+    int error = getaddrinfo(url, NULL, &hints, &result);
+
+    if(error != 0) {                                                //errore nella risoluzione
+
+        fprintf(stderr, "Error resolving URL\n");
+        return NULL; 
+
+    }
+
+    if(result == NULL) {                                            //nessun risultato
+
+        fprintf(stderr, "No results found for the URL.\n");
+        return NULL;
+
+    }
+
+    struct sockaddr *addr_sporca = result->ai_addr;                 //il procedimento è lo stesso di ipv4 ma con sockaddr_in6
+    struct sockaddr_in6 *addr = (struct sockaddr_in6 *)addr_sporca;   
+    struct in6_addr ip_bin = addr->sin6_addr;                         //estraggo l'ip reale in binario
+
+
+    char buffer[INET6_ADDRSTRLEN];                                       //buffer temporaneo per la conversione da binario a stringa
+
+    if(inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)) == NULL) {   //converto da binario a stringa
+
+        fprintf(stderr, "Error converting binary IP to string.\n");
+        freeaddrinfo(result);                                           //libero la memoria allocata da getaddrinfo
+        return NULL;   
+
+    }
+
+    char *ip_string = malloc(strlen(buffer) + 1);                       //devo allocarlo dinamicamente per forza, se no nella return non viene salvato e la variabile si autodistrugge
+    strcpy(ip_string, buffer);                                          //copio il buffer nella stringa dinamica
+
+
+    printf("Resolved URL %s to IP: %s\n", url, ip_string);              //stampo l'ip risolto
+
+    freeaddrinfo(result);                                               //libero la memoria allocata da getaddrinfo
+
+    return ip_string; 
+
+
+
+}
