@@ -14,7 +14,7 @@
 #include <sys/types.h>          //necessaria per estendere i tipi di dato
 
 int check_ipv4(char *ip, struct in_addr *ip_bin);
-void store_ip(char *ip, struct in_addr *ip_bin);
+void store_ip(char *ip, struct in_addr *ip_bin, struct in6_addr *ip_bin6, int flag);
 char *dns_resolver_ipv4(char *url);
 char *reverse_dns(struct in_addr ip_bin);
 double gettimestamp();

@@ -30,7 +30,7 @@ int check_ipv4(char *ip, struct in_addr *ip_bin){
     if(val == 1) {
 
         //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
-        store_ip(ip, ip_bin);   //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(ip, ip_bin, NULL, 4);   //salvo l'ip in formato binario, passando la variabile per argomento
 
         printf("Valid IPv4 address provided: %s\n", ip);
 
@@ -51,7 +51,7 @@ int check_ipv4(char *ip, struct in_addr *ip_bin){
 
         }
 
-        store_ip(resolved_ip, ip_bin);                     //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(resolved_ip, ip_bin, NULL, 4);                     //salvo l'ip in formato binario, passando la variabile per argomento
 
 
         //alla fine libero la memoria di resolved_ip
@@ -74,11 +74,21 @@ int check_ipv4(char *ip, struct in_addr *ip_bin){
 
 
 
-void store_ip(char *ip, struct in_addr *ip_bin) {
+void store_ip(char *ip, struct in_addr *ip_bin, struct in6_addr *ip_bin6, int flag) {
 
-    inet_pton(AF_INET, ip, ip_bin);                 //uso di nuovo inet_pton, ma ora salvo la variabile
 
-    if(ip_bin == NULL) {
+    if(flag == 4){                                      //flag 4 = ipv4
+
+        inet_pton(AF_INET, ip, ip_bin);                 //uso di nuovo inet_pton, ma ora salvo la variabile
+    
+    }else if(flag == 6){                                //flag 6 = ipv6 
+
+        inet_pton(AF_INET6, ip, ip_bin6);               
+
+    }
+    
+
+    if(ip_bin == NULL && ip_bin6 == NULL) { 
 
         fprintf(stderr, "Error, the address doesn't exist.\n");
         return;
@@ -223,7 +233,7 @@ int check_ipv6(char *ip, struct in6_addr *ip_bin){
     if(val == 1) {
 
         //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
-        //store_ipv6(ip, ip_bin);   //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(ip, NULL, ip_bin, 6);   //salvo l'ip in formato binario, passando la variabile per argomento
 
         printf("Valid IPv6 address provided: %s\n", ip);
 
@@ -244,7 +254,7 @@ int check_ipv6(char *ip, struct in6_addr *ip_bin){
 
         }
 
-        //store_ipv6(resolved_ip, ip_bin);                     //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(resolved_ip, NULL, ip_bin, 6);                     //salvo l'ip in formato binario, passando la variabile per argomento
 
     }else {
 
