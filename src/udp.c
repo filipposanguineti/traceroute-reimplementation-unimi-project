@@ -140,3 +140,40 @@ int close_socket_udp(int sd){
     return 0; 
     
 }
+
+
+
+
+//IPV6
+
+int create_socket_udp_ipv6(){
+
+    int  sd = socket(AF_INET6, SOCK_DGRAM, 0);                                    //uso af_inet6 per ipv6
+
+    if(sd < 0) {
+
+        fprintf(stderr, "Error creating IPv6 UDP socket.\n");
+        return -1; 
+    }
+
+    //la bind
+    struct sockaddr_in6 bind_addr;
+    memset(&bind_addr, 0, sizeof(bind_addr));
+
+    bind_addr.sin6_family = AF_INET6;                                             
+    bind_addr.sin6_addr = in6addr_any;                                      //in6addr_any è l'equivalenete di INADDR_ANY per ipv6, è già in big endian             
+    bind_addr.sin6_port = htons(7777);      
+    
+    int result = bind(sd, (struct sockaddr *)&bind_addr, sizeof(bind_addr));    
+
+    if(result < 0) {
+
+        fprintf(stderr, "Error binding IPv6 UDP socket.\n");
+        return -1;
+
+    }
+
+    return sd;
+
+
+}

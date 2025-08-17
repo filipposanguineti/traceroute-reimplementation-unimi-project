@@ -70,6 +70,10 @@ int main(int argc, char *argv[]) {
         printf("IPv6 support is not implemented yet.\n");
         struct in6_addr ip_bin_6; //in6-addr è il cugino di in-addr ma per ipv6
         check_ipv6(argv[1], &ip_bin_6); 
+        int sd_ipv6 = create_socket_udp_ipv6(); //creo la socket udp ipv6
+        printf("sd ipv6: %d\n", sd_ipv6);
+
+        close_socket_udp(sd_ipv6); //chiudo la socket udp ipv6
         return 0;
 
     }
