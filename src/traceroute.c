@@ -62,7 +62,6 @@ int main(int argc, char *argv[]) {
 
 
 
-
         //IPV4
     }else if(strcmp(argv[2], "-ipv6") == 0){
 
@@ -143,7 +142,7 @@ int trace(struct in_addr dest){
 
     for(ttl = 1; ttl <= max_ttl; ttl++){
 
-        ttl_increment(udp_sd, ttl);                             //setto il ttl nella socket udp
+        ttl_increment(udp_sd, ttl, 4);                             //setto il ttl nella socket udp
         
         informations array_probe[3] = {0};                      //array di struct per salvare i dati dei probe
 

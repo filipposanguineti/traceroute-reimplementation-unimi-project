@@ -50,11 +50,26 @@ int create_socket_udp(){
 
 
 
-int ttl_increment(int sd, int ttl){
+int ttl_increment(int sd, int ttl, int flag){
 
-    //per modificare il ttl posso usare la funzione setsockopt
-    //passo quindi il socket descriptor, il protocollo da modificare (IP), il campo del pacchetto (ttl), il valore che voglio, e la dimensione che ha (un intero)
-    int status = setsockopt(sd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+    int status;
+
+    if(flag == 4){
+
+        //per modificare il ttl posso usare la funzione setsockopt
+        //passo quindi il socket descriptor, il protocollo da modificare (IP), il campo del pacchetto (ttl), il valore che voglio, e la dimensione che ha (un intero)
+        int status = setsockopt(sd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+
+    }else if(flag == 6){
+
+        
+        //cambai il protocllo, inoltre in ipv6 i ttl vengono chiamati hop, metto unicast perché mi interessa un'unica destinazione
+        int status = setsockopt(sd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl));
+
+
+    }
+
+    
 
     if(status < 0) {
 
