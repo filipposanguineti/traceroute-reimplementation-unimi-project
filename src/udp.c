@@ -11,6 +11,7 @@
 #include <sys/types.h>                  //necessaria per estendere i tipi di dato
 #include <netinet/udp.h>
 
+
 #include "utils.h"                      //includo il file header per le dichiarazioni delle funzioni
 
 
@@ -58,13 +59,13 @@ int ttl_increment(int sd, int ttl, int flag){
 
         //per modificare il ttl posso usare la funzione setsockopt
         //passo quindi il socket descriptor, il protocollo da modificare (IP), il campo del pacchetto (ttl), il valore che voglio, e la dimensione che ha (un intero)
-        int status = setsockopt(sd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+        status = setsockopt(sd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
 
     }else if(flag == 6){
 
         
         //cambai il protocllo, inoltre in ipv6 i ttl vengono chiamati hop, metto unicast perché mi interessa un'unica destinazione
-        int status = setsockopt(sd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl));
+        status = setsockopt(sd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl));
 
 
     }
@@ -100,6 +101,8 @@ int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *por
 
     //mando il pacchetto, lo lascio vuoto per comodità
     int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));  //nessun buffer, quindi len 0, nessuna opzione quindi 0
+    //sendto prende; sd, un buffer da inviare, la lunghezza del buffer, le opzioni, la destinazione, la dimensione della destinazion
+
 
     if(sent < 0) {
 
@@ -145,7 +148,7 @@ int close_socket_udp(int sd){
 
     int status = close(sd); 
 
-    if(close < 0) {
+    if(status < 0) {
 
         fprintf(stderr, "Error closing UDP socket.\n");
         return -1; 
@@ -190,5 +193,36 @@ int create_socket_udp_ipv6(){
 
     return sd;
 
+
+}
+
+
+int send_probe_ipv6(int sd, struct in6_addr ip_bin, int ttl, int probe_index, int *port){
+
+    //il funzionamento è lo stesso del send probe ipv4, ma devo usare le strutture ipv6
+
+     *port = 33434 + (ttl-1)*3 + probe_index;
+
+    struct sockaddr_in6 dest;
+    memset(&dest, 0, sizeof(dest)); 
+
+    dest.sin6_family = AF_INET6;                                                  //imposto la famiglia di indirizzi
+    dest.sin6_addr = ip_bin;                                                     //imposto l'indirizzo di destinazione
+    dest.sin6_port = htons(*port);                                               //imposto la porta di destinazione con cui identificherò le risposte
+
+    //mando il pacchetto, lo lascio vuoto per comodità
+    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));  //uguale a ipv4
+
+    if(sent < 0) {
+
+        fprintf(stderr, "Error sending probe.\n");
+        return -1;
+
+    }else {
+        char buffer[INET6_ADDRSTRLEN];
+        printf("Probe sent to %s on port %d\n", inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)), *port);
+        return 0;
+
+    }
 
 }
