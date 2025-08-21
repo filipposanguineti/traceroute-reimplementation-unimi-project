@@ -20,5 +20,6 @@ int receive_icmp(int sd, char *buffer, int flag);
 int extract_rec_data(char *data, struct in_addr *addr, char *addr_string, int *error, int *port);
 int close_socket_icmp(int sd);
 int create_socket_raw_icmp_ipv6();
+int extract_rec_data_ipv6(char *data, struct in6_addr *addr, char *addr_string, int *error, int *port);
 
 #endif

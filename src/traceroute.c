@@ -80,6 +80,12 @@ int main(int argc, char *argv[]) {
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
         receive_icmp(sd_icmp_ipv6, buffer, 6);
+        int error;
+        int reply_port;
+        char addr_string[INET6_ADDRSTRLEN];
+
+        extract_rec_data_ipv6(buffer, &ip_bin_6, addr_string, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
+        printf("Error: %d, port: %d, addr: %s\n", error, reply_port, addr_string);
 
         close_socket_udp(sd_ipv6); 
         close_socket_icmp(sd_icmp_ipv6);
@@ -211,11 +217,6 @@ int trace(struct in_addr dest){
                 extract_rec_data(reply, &reply_addr, reply_addr_string, &icmp_error_code, &reply_port);
                 char *url_translated = reverse_dns(reply_addr);     //faccio il reverse dns dell'indirizzo di risposta
 
-
-                // //se sono arrivato fin qui significa che ho ricevuto una risposta valida
-                // //setto la struct info con i dati ricevuto (tranne rtt che calcolo solo se riesco ad accoppiare invio e ricezione)
-                // strncpy(info.ip_string, reply_addr_string, INET_ADDRSTRLEN);
-                // strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
                 
 
                 if(send_port == reply_port) {

@@ -13,6 +13,8 @@
 #include <sys/types.h>              //necessaria per estendere i tipi di dato
 #include <netinet/ip_icmp.h>
 #include <netinet/udp.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 
 
 #include "utils.h"                  //includo il file header per le dichiarazioni delle funzioni
@@ -180,6 +182,57 @@ int create_socket_raw_icmp_ipv6(){
 
 
 
+int extract_rec_data_ipv6(char *data, struct in6_addr *addr, char *addr_string, int *error, int *port){
+
+    //Come con ipv4 bisogna saltare di header in header per recuperare le varie informazioni
+
+    //ESTRAZIONE IP
+
+    //l'header ip in questo caso è fisso a 40byte quindi si usa sizeof
+    struct ip6_hdr *ip_header = (struct ip6_hdr *) data;    //devo castare a ip6_hdr per poter leggere correttamente i campi (come con ipv4)
+    *addr = ip_header->ip6_src;   //con ipv6 posso passre direttamente il campo dell'header, perché dentro in6_addr non c'è campo s_addr    
+    
+    if(inet_ntop(AF_INET6, addr, addr_string, INET6_ADDRSTRLEN) == NULL) { 
+           //converto l'indirizzo IP binario in stringa
+        fprintf(stderr, "Error converting binary IP to string.\n");
+        return -1;
+    
+    }
+
+    //ESTRAZIONE TYPE E CODE
+    //salto l'header ipv6 (40 byte) per recuperare gli error
+
+    struct icmp6_hdr *icmp_header = (struct icmp6_hdr *) (data + sizeof(struct ip6_hdr));    //come ipv4 ma con icmp6hdr, uso sizeof invece di calcolare a mano la lunghezza
+    int type = icmp_header->icmp6_type;                                           //estraggo il type
+    *error = icmp_header->icmp6_code;                                             //estraggo il code
+
+    //ESTRAZIONE PORTA
+    //devo superare icmp e quello ip originale per arrivare a udp
+
+    struct ip6_hdr *ip_header_probe = (struct ip6_hdr *) (data + sizeof(struct ip6_hdr) + sizeof(struct icmphdr)); 
+
+    //potrebbero esserci degli header di estensione. Devo controllare il next header.
+    int next_header = ip_header_probe->ip6_nxt; //prendo il next header dell'ip del probe
+
+    if(next_header == 17){ //17 è il codice del protocollo udp
+
+        struct udphdr *udp_header = (struct udphdr *) (data + sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct ip6_hdr)); 
+        *port = ntohs(udp_header->dest); //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
+
+        return 0;
+
+
+    }else{
+
+        //in teoria non succede mai, perché il server che risponde non modifica gli header, e io non mando nessuna estensione
+        return 0;
+    }
+
+
+}
+
+
+
 
 
 
@@ -231,5 +284,57 @@ int create_socket_raw_icmp_ipv6(){
 //      dest          | 2 byte     | Porta destinazione (33434 + ttl + probe)
 //      len           | 2 byte     | Lunghezza totale UDP (header+payload)
 //      check         | 2 byte     | Checksum UDP
+
+
+
+
+
+
+// [0] IPv6 header esterno (struct ip6_hdr) – 40 byte fissi
+// Campo              | Dim.   | Descrizione
+// -------------------------------------------------------
+// version              | 4 bit  | Versione IP (=6)
+// traffic class        | 8 bit  | Classe di traffico
+// flow label           | 20 bit | Etichetta di flusso
+// payload_len          | 2 byte | Lunghezza payload (ICMPv6 + quoted pkt)
+// next_header          | 1 byte | = 58 (ICMPv6)
+// hop_limit            | 1 byte | Hop Limit residuo
+// src addr             | 16 byte| IP sorgente (router o destinazione)
+// dst addr             | 16 byte| IP destinazione (tu)
+
+// [40] ICMPv6 header (struct icmp6_hdr) – 8 byte
+// Campo              | Dim.   | Descrizione
+// -------------------------------------------------------
+// type                 | 1 byte | Messaggio ICMPv6 (es. 3 Time Exceeded, 1 Dest Unreach)
+// code                 | 1 byte | Dettaglio (es. 0 hop limit exceeded, 4 port unreachable)
+// checksum             | 2 byte | Checksum ICMPv6
+// rest_of_hdr          | 4 byte | Dipende dal tipo:
+//                                     - Time Exceeded: unused (0)
+//                                     - Packet Too Big: MTU
+//                                     - Parameter Problem: pointer, ecc.
+
+// [48] IPv6 header ORIGINALE (quello del tuo probe) – 40 byte fissi
+// Campo              | Dim.   | Descrizione
+// -------------------------------------------------------
+// version              | 4 bit  | (=6)
+// traffic class        | 8 bit  |
+// flow label           | 20 bit |
+// payload_len          | 2 byte | Lunghezza del payload ORIGINALE
+// next_header          | 1 byte | Es. 17 (UDP), 6 (TCP) oppure un header di estensione
+// hop_limit            | 1 byte | Hop Limit che avevi impostato
+// src addr             | 16 byte| Il tuo indirizzo sorgente
+// dst addr             | 16 byte| Destinazione del probe
+
+// [88] Payload ORIGINALE “quotato” (il più possibile)
+// Se ci sono header di estensione, i primi 8 byte possono essere proprio quelli (e non l’UDP header).
+
+// Se NON ci sono header di estensione tra IPv6 e UDP:
+// [88] UDP header originale (struct udphdr) – 8 byte
+// Campo              | Dim.   | Descrizione
+// -------------------------------------------------------
+// source port          | 2 byte | porta sorgente
+// dest port            | 2 byte | porta destinazione (es. base + (ttl-1)*3 + probe)
+// len                  | 2 byte | lunghezza UDP (header+payload)
+// check                | 2 byte | checksum UDP
 
 
