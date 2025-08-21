@@ -40,13 +40,33 @@ int create_socket_raw_icmp(){
 }
 
 
-int receive_icmp(int sd, char *buffer){
+int receive_icmp(int sd, char *buffer, int flag){
 
-    struct sockaddr_in reply_addr;              //struttura vuota che conterrà l'indirizzo di chi mi ha risposto
-    socklen_t addr_len = sizeof(reply_addr);    //lunghezza della struttura (per la recvfrom mi serve il tipo socklen_t)
+    int received;
 
-    //passo sd, il buffer, la sua dimensione, il flag 0 per nessuna opzione, indirizzo vuoto creato prima e la sua dimensione
-    int received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
+    if(flag == 4){
+
+        struct sockaddr_in reply_addr;              //struttura vuota che conterrà l'indirizzo di chi mi ha risposto
+        socklen_t addr_len = sizeof(reply_addr);    //lunghezza della struttura (per la recvfrom mi serve il tipo socklen_t)
+
+        //passo sd, il buffer, la sua dimensione, il flag 0 per nessuna opzione, indirizzo vuoto creato prima e la sua dimensione
+        received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
+
+    }else if(flag == 6){
+
+        struct sockaddr_in6 reply_addr;              
+        socklen_t addr_len = sizeof(reply_addr);    
+
+        received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
+
+        char ip_str[INET6_ADDRSTRLEN];
+        printf("ICMP 6 reply: %s\n", inet_ntop(AF_INET6, &(reply_addr.sin6_addr), ip_str, sizeof(ip_str)));
+        
+
+
+    }
+
+    
 
     if(received < 0) {
 
@@ -139,6 +159,24 @@ int close_socket_icmp(int sd){
 
 
 
+//IPV6
+
+int create_socket_raw_icmp_ipv6(){
+
+    int sd = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);    //af_inet6 e icmpv6
+
+    if(sd < 0) {
+
+        fprintf(stderr, "Error creating raw ICMP IPv6 socket.\n");
+        return -1; 
+
+    }else {
+
+        return sd;
+    }
+    
+    
+}
 
 
 
@@ -146,8 +184,7 @@ int close_socket_icmp(int sd){
 
 
 
-
-//MEMO SULLA STRUTTURA DEI PACCHETTI RICEVUTI
+//MEMO SULLA STRUTTURA DEI PACCHETTI RICEVUTI (IPV4)
 
 // [0]  IP header esterno (struct iphdr) - 20 byte min. (ihl*4)
 //      Campo         | Dimensione | Descrizione
