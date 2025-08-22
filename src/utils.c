@@ -319,3 +319,34 @@ char *dns_resolver_ipv6(char *url){
 
 
 }
+
+
+char *reverse_dns_ipv6(struct in6_addr ip_bin){
+
+    char *url = malloc(BUFFER_SIZE); //alloco dinamicamente per poter farla uscire dalla funzione
+    char buffer_tmp[BUFFER_SIZE]; //buffer temporaneo per getnameinfo, che con l'allocazione dinamica mi dava errore
+
+    //getnameinfo() vuole una struct sockaddr_in, quindi devo crearla
+    struct sockaddr_in6 ip_addr;
+    memset(&ip_addr, 0, sizeof(ip_addr)); //inizializzo a zero
+
+    ip_addr.sin6_family = AF_INET6; 
+    ip_addr.sin6_addr = ip_bin; 
+    ip_addr.sin6_port = 0;          //per il reverse dns non serve la porta
+
+    //getnameinfo mi serve per la risoluzione dns inversa
+    //devo passare come parametri la mia struct sockaddr_in castata in sockaddr (creare direttamente sockaddr risulta complesso), la su a dimesnsione, il buffer, la sua dimensione
+    //poi passo null per la scelta del servizio (non mi interessa avere dei servizi in particolere, http etc...), la dimensione di quel buffer (NULL) e la flag 0 in quanto voglio un comportamneto standard
+    //da notare che così anche se non trova nessun url, restituisce l'ip in stringa, così da poter sempre stampare qualcosa, anche quando la risoluzione fallisce
+    int error = getnameinfo((struct sockaddr *)&ip_addr, sizeof(ip_addr), buffer_tmp, sizeof(buffer_tmp), NULL, 0, 0);
+
+    if(error != 0) { 
+        
+        return NULL; 
+    }
+    strcpy(url, buffer_tmp); //trasferisco l'url
+    
+
+    return url;
+
+}
