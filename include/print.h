@@ -20,5 +20,7 @@ void print_line(informations *array, int hop_number);
 void print_intro(char *ip, char *url);
 void print_numbers(int hop_number);
 void print_final(informations end); 
+void print_final_ipv6(informations_ipv6 end);
+void print_line_ipv6(informations_ipv6 *array, int hop_number);
 
 #endif

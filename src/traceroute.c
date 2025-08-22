@@ -27,6 +27,7 @@
 //dichiarazioni funzioni
 void test_stampa_ip(struct in_addr ip_bin, char *ip_string);
 int trace(struct in_addr dest);
+int trace_ipv6(struct in6_addr dest);
 
 
 
@@ -66,32 +67,44 @@ int main(int argc, char *argv[]) {
     }else if(strcmp(argv[2], "-ipv6") == 0){
 
         //IPV6
-        printf("IPv6 support is not implemented yet.\n");
-        struct in6_addr ip_bin_6; //in6-addr è il cugino di in-addr ma per ipv6
-        check_ipv6(argv[1], &ip_bin_6); 
-        int sd_ipv6 = create_socket_udp_ipv6(); //creo la socket udp ipv6
-        int sd_icmp_ipv6 = create_socket_raw_icmp_ipv6();
+        // printf("IPv6 support is not implemented yet.\n");
+        // struct in6_addr ip_bin_6; //in6-addr è il cugino di in-addr ma per ipv6
+        // check_ipv6(argv[1], &ip_bin_6); 
+        // int sd_ipv6 = create_socket_udp_ipv6(); //creo la socket udp ipv6
+        // int sd_icmp_ipv6 = create_socket_raw_icmp_ipv6();
 
-        int port;
-        printf("sd ipv6: %d\n", sd_ipv6);
-        ttl_increment(sd_ipv6, 5, 6); 
-        send_probe_ipv6(sd_ipv6, ip_bin_6, 5, 0, &port); //invio un probe ipv6 di prova
+        // int port;
+        // printf("sd ipv6: %d\n", sd_ipv6);
+        // ttl_increment(sd_ipv6, 10, 6); 
+        // send_probe_ipv6(sd_ipv6, ip_bin_6, 10, 0, &port); //invio un probe ipv6 di prova
 
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-        char addr_string[INET6_ADDRSTRLEN];
-        struct in6_addr addr;
-        receive_icmp(sd_icmp_ipv6, buffer, &addr, addr_string, 6);
-        int error;
-        int reply_port;
-        char addr_string_6[INET6_ADDRSTRLEN];
+        // char buffer[BUFFER_SIZE];
+        // memset(buffer, 0, BUFFER_SIZE);
+        // char addr_string[INET6_ADDRSTRLEN];
+        // struct in6_addr addr;
+        // receive_icmp(sd_icmp_ipv6, buffer, &addr, addr_string, 6);
+        // int error;
+        // int reply_port;
+        // char addr_string_6[INET6_ADDRSTRLEN];
 
-        extract_rec_data_ipv6(buffer, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
-        printf("Error: %d, port: %d, ip: %s\n", error, reply_port, addr_string);
+        // extract_rec_data_ipv6(buffer, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
+        // printf("Error: %d, port: %d, ip: %s\n", error, reply_port, addr_string);
+        
+        // char *url = reverse_dns_ipv6(addr); //faccio il reverse dns
+        // printf("URL: %s\n", url);
 
-        close_socket_udp(sd_ipv6); 
-        close_socket_icmp(sd_icmp_ipv6);
-        return 0;
+        // close_socket_udp(sd_ipv6); 
+        // close_socket_icmp(sd_icmp_ipv6);
+        // return 0;
+
+
+        struct in6_addr ip_bin6;
+        check_ipv6(argv[1], &ip_bin6); //chiamo la funzione check_ipv6 per verificare se l'ip è valido o se è un url da risolvere
+        char buffer[INET6_ADDRSTRLEN];                           
+        inet_ntop(AF_INET6, &ip_bin6, buffer, sizeof(buffer));
+        print_intro(buffer, argv[1]);                           
+        trace_ipv6(ip_bin6); 
+        return 0;                                         
 
     }
 
@@ -270,6 +283,150 @@ int trace(struct in_addr dest){
     }
 
     return 0;
+
+}
+
+
+
+
+int trace_ipv6(struct in6_addr dest){
+
+    //VARIABILI
+
+    int udp_sd;                                     //creo la socket udp
+    int icmp_sd;                                    //creo la socket raw icmp
+    int ttl = 1;                                    //il ttl parte da 1
+    int probe = 0;                                  //indice del probe, parte da 0 così da calcoare la porta di destinazione e distinguere i prbe
+    int send_port;                                  //porta calcolata all'invio del pacchetto udp
+    int max_ttl = 30;                               //traceroute si spinge fino a 30 hop, quindi non vado oltre
+    char reply[BUFFER_SIZE];                        //buffer per la risposta icmp
+    struct in6_addr reply_addr;                      //la struct per l'indirizzo da cui ho ricevuto risposta
+    char reply_addr_string[INET_ADDRSTRLEN];        //buffer per la conversione da binario a string
+    int icmp_error_code;                            //codice di errore ricevuto in icmp
+    int reply_port;                                 //porta del probe che ha ricevuto la risposta, per ritrovare il probe giusto
+    double ts0;                                     //timestamp del probe
+    double ts1;                                     //timestamp della risposta
+    int hop_number = 0;                             //numero di ho che mi serirà nella stampa di ognuno di essi
+
+    udp_sd = create_socket_udp_ipv6();
+    icmp_sd = create_socket_raw_icmp_ipv6();
+
+    for(ttl = 1; ttl <= max_ttl; ttl++){
+
+        ttl_increment(udp_sd, ttl, 6);                             //setto il ttl nella socket udp
+        
+        informations_ipv6 array_probe[3] = {0};                      //array di struct per salvare i dati dei probe
+
+        for(probe = 0; probe < 3; probe++){
+
+            
+            ts0 = gettimestamp();                               //prendo il timestamp prima di inviare il probe
+            send_probe_ipv6(udp_sd, dest, ttl, probe, &send_port);   //invio il probe
+
+            
+            //la struct per i dati la dichiaro qui così da essere azzerata automaticamente ad ogni invio
+            informations_ipv6 info = {0};                                         
+
+            //metto un ciclo infinito per la select, finché non ha trattato tutte le risposte in coda
+            while(1){
+
+                
+                //volendo usare la select, devo gestire il timeout e settare alcune variabili
+                struct timeval timeout;
+                timeout.tv_sec = 3;                                 //metto un timeout di 3 secondi
+                timeout.tv_usec = 0;                                //microsecondi a 0
+
+                fd_set read_fds;                                    //creo il set di file descriptor che la select monitora
+                FD_ZERO(&read_fds);                                 //inizializzo il set a zero
+                FD_SET(icmp_sd, &read_fds);                         //aggiungo la socket icmp al set
+
+                int result = select(icmp_sd + 1, &read_fds, NULL, NULL, &timeout); 
+
+                //setto di default la struct info come se non avesse trovato risultato
+                info.rtt = -1;
+                strncpy(info.ip_string, "*", INET6_ADDRSTRLEN);      //setto *
+                strncpy(info.url, "*", BUFFER_SIZE);                //setto * per l'url
+
+                if(result < 0) {
+
+                    fprintf(stderr, "Error in select.\n");
+                    break;
+
+                }else if(result == 0) {
+                    
+                    break;
+                }
+
+                //se la select ha trovato qualcosa da leggere, leggo dalla socket icmp
+                memset(reply, 0, BUFFER_SIZE);                      //azzero il buffer di risposta
+                int rec = receive_icmp(icmp_sd, reply, &reply_addr, reply_addr_string, 6);             //ricevo un pacchetto icmp
+
+                if(rec < 0) {
+
+                    fprintf(stderr, "Error receiving ICMP packet.\n");
+                    break;
+                    
+                }
+
+                //estraggo i dati dal pacchetto ricevuto
+                extract_rec_data_ipv6(reply, &icmp_error_code, &reply_port);
+                char *url_translated = reverse_dns_ipv6(reply_addr);     //faccio il reverse dns dell'indirizzo di risposta
+
+                
+
+                if(send_port == reply_port) {
+
+                    //se la porta del probe corrisponde a quella della risposta, ho trovato il probe giusto
+
+                    ts1 = gettimestamp();                           //prendo il timestamp della risposta
+
+                    //aggiungo alla struct l'rtt
+                    info.rtt = ts1 - ts0; //rtt caloclato come ts di arrivo - ts di partenza
+
+                    //se sono arrivato fin qui significa che ho ricevuto una risposta valida
+                    //setto la struct info con i dati ricevuto 
+                    strncpy(info.ip_string, reply_addr_string, INET6_ADDRSTRLEN);
+                    strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
+
+
+                    //controllo se sono arrivato alla fine (codice errore 3)
+                    if(icmp_error_code == 4) {
+
+                        print_final_ipv6(info);                          //stampo il risultato finale
+                        close_socket_udp(udp_sd);                   //chiudo la socket udp
+                        close_socket_icmp(icmp_sd);                 //chiudo la socket icmp
+                        return 0; //esco dalla funzione (non solo dal ciclo)
+
+                    }
+
+
+                    break; //esco dal ciclo dei probe
+
+                }
+
+
+            }
+
+            
+            //qui devo creare un array di struct informations per salvare il probe corrente
+            array_probe[probe].rtt = info.rtt;                                          //salvo l'rtt
+            strncpy(array_probe[probe].ip_string, info.ip_string, INET6_ADDRSTRLEN);     //salvo nell'array l'ip del prbe corrente
+            strncpy(array_probe[probe].url, info.url, BUFFER_SIZE);                     //salvo l'url del probe corrente
+
+        }
+
+        //ora devo stampare i risultati dei probe per questo ttl
+        hop_number++;                                                                   //incremento il numero di hop
+        print_line_ipv6(array_probe, hop_number);                                            //stampo i risultati dei probe dopo ogni tre probe (ad ogni ttl)
+
+        
+    }
+    
+    return 0;
+
+
+
+
 
 }
 

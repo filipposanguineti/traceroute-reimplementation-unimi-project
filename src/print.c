@@ -70,3 +70,39 @@ void print_final(informations end){
 
     return;
 }
+
+void print_final_ipv6(informations_ipv6 end){
+
+    printf("Reached destination: %s (%s) %.2f ms\n", end.ip_string, end.url, end.rtt);
+
+    return;
+
+    
+}
+
+
+void print_line_ipv6(informations_ipv6 *array, int hop_number){
+
+    //ricevo un array di tre elementi, ciclo e stampo i tre risultati
+
+    print_numbers(hop_number);      
+
+    for(int i = 0; i<3; i++){
+
+        
+
+        if(array->rtt == -1){
+
+            printf("[%s (%s) * ms]\t\t", array[i].ip_string, array[i].url);
+        
+        } else{
+            printf("[%s (%s) %.2f ms]\t\t", array[i].ip_string, array[i].url, array[i].rtt);
+        }
+    }
+
+    //aggiungo un \n alla fine per passare alla riga successiva
+    printf("");
+    printf("\n"); 
+    return;
+    
+}

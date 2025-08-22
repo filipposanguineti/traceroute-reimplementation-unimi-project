@@ -25,5 +25,11 @@ typedef struct {
     char url[BUFFER_SIZE];
 } informations;                 //è la struttura che passo alla funzione di stampa
 
+typedef struct {
+    char ip_string[INET6_ADDRSTRLEN]; 
+    double rtt; 
+    char url[BUFFER_SIZE];
+} informations_ipv6;                 //è la struttura che passo alla funzione di stampa per ipv6
+
 
 #endif

@@ -219,8 +219,8 @@ int send_probe_ipv6(int sd, struct in6_addr ip_bin, int ttl, int probe_index, in
         return -1;
 
     }else {
-        char buffer[INET6_ADDRSTRLEN];
-        printf("Probe sent to %s on port %d\n", inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)), *port);
+        // char buffer[INET6_ADDRSTRLEN];
+        // printf("Probe sent to %s on port %d\n", inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)), *port);
         return 0;
 
     }
