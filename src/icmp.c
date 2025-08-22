@@ -42,7 +42,7 @@ int create_socket_raw_icmp(){
 }
 
 
-int receive_icmp(int sd, char *buffer, int flag){
+int receive_icmp(int sd, char *buffer, struct in6_addr *ip , char *addr_string, int flag){
 
     int received;
 
@@ -61,8 +61,10 @@ int receive_icmp(int sd, char *buffer, int flag){
 
         received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
 
-        char ip_str[INET6_ADDRSTRLEN];
-        printf("ICMP 6 reply: %s\n", inet_ntop(AF_INET6, &(reply_addr.sin6_addr), ip_str, sizeof(ip_str)));
+        //devo salvare l'ip che mi arriva, perché con icmpv6 non posso estrarlo dal buffer ricevuto (non c'è l'header ip esterno)
+        *ip = reply_addr.sin6_addr;             //salvo l'ip, recuperandolo dalla struct reply_addr
+
+        inet_ntop(AF_INET6, &(reply_addr.sin6_addr), addr_string, INET6_ADDRSTRLEN);
         
 
 
@@ -182,42 +184,30 @@ int create_socket_raw_icmp_ipv6(){
 
 
 
-int extract_rec_data_ipv6(char *data, struct in6_addr *addr, char *addr_string, int *error, int *port){
+int extract_rec_data_ipv6(char *data, int *error, int *port){
 
-    //Come con ipv4 bisogna saltare di header in header per recuperare le varie informazioni
-
-    //ESTRAZIONE IP
-
-    //l'header ip in questo caso è fisso a 40byte quindi si usa sizeof
-    struct ip6_hdr *ip_header = (struct ip6_hdr *) data;    //devo castare a ip6_hdr per poter leggere correttamente i campi (come con ipv4)
-    *addr = ip_header->ip6_src;   //con ipv6 posso passre direttamente il campo dell'header, perché dentro in6_addr non c'è campo s_addr    
-    
-    if(inet_ntop(AF_INET6, addr, addr_string, INET6_ADDRSTRLEN) == NULL) { 
-           //converto l'indirizzo IP binario in stringa
-        fprintf(stderr, "Error converting binary IP to string.\n");
-        return -1;
-    
-    }
+    //in icmpv6 il kernel linux non mi ritorna l'header ip esterno, non posso quindi estrarre l'indirizzo che mi ha risposto (devo farlo dalla recvfrom)
+    //l'header parte direttamente da quello icmp
 
     //ESTRAZIONE TYPE E CODE
     //salto l'header ipv6 (40 byte) per recuperare gli error
 
-    struct icmp6_hdr *icmp_header = (struct icmp6_hdr *) (data + sizeof(struct ip6_hdr));    //come ipv4 ma con icmp6hdr, uso sizeof invece di calcolare a mano la lunghezza
-    int type = icmp_header->icmp6_type;                                           //estraggo il type
-    *error = icmp_header->icmp6_code;                                             //estraggo il code
+    struct icmp6_hdr *icmp_header = (struct icmp6_hdr *) data ;    //come ipv4 ma con icmp6hdr
+    int type = icmp_header->icmp6_type;                                           
+    *error = icmp_header->icmp6_code;                                             
 
     //ESTRAZIONE PORTA
     //devo superare icmp e quello ip originale per arrivare a udp
 
-    struct ip6_hdr *ip_header_probe = (struct ip6_hdr *) (data + sizeof(struct ip6_hdr) + sizeof(struct icmphdr)); 
+    struct ip6_hdr *ip_header_probe = (struct ip6_hdr *) (data + sizeof(struct icmp6_hdr));  //arrivo all'ip originale
 
     //potrebbero esserci degli header di estensione. Devo controllare il next header.
     int next_header = ip_header_probe->ip6_nxt; //prendo il next header dell'ip del probe
 
     if(next_header == 17){ //17 è il codice del protocollo udp
 
-        struct udphdr *udp_header = (struct udphdr *) (data + sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr) + sizeof(struct ip6_hdr)); 
-        *port = ntohs(udp_header->dest); //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
+        struct udphdr *udp_header = (struct udphdr *) (data + sizeof(struct icmp6_hdr) + sizeof(struct ip6_hdr)); 
+        *port = ntohs(udp_header->dest);    //estraggo la porta di destinazione, che è quella del probe, e la converto da big endian a little endian
 
         return 0;
 

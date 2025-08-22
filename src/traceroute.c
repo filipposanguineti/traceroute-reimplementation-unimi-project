@@ -74,18 +74,20 @@ int main(int argc, char *argv[]) {
 
         int port;
         printf("sd ipv6: %d\n", sd_ipv6);
-        ttl_increment(sd_ipv6, 3, 6); 
-        send_probe_ipv6(sd_ipv6, ip_bin_6, 3, 0, &port); //invio un probe ipv6 di prova
+        ttl_increment(sd_ipv6, 5, 6); 
+        send_probe_ipv6(sd_ipv6, ip_bin_6, 5, 0, &port); //invio un probe ipv6 di prova
 
         char buffer[BUFFER_SIZE];
         memset(buffer, 0, BUFFER_SIZE);
-        receive_icmp(sd_icmp_ipv6, buffer, 6);
+        char addr_string[INET6_ADDRSTRLEN];
+        struct in6_addr addr;
+        receive_icmp(sd_icmp_ipv6, buffer, &addr, addr_string, 6);
         int error;
         int reply_port;
-        char addr_string[INET6_ADDRSTRLEN];
+        char addr_string_6[INET6_ADDRSTRLEN];
 
-        extract_rec_data_ipv6(buffer, &ip_bin_6, addr_string, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
-        printf("Error: %d, port: %d, addr: %s\n", error, reply_port, addr_string);
+        extract_rec_data_ipv6(buffer, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
+        printf("Error: %d, port: %d, ip: %s\n", error, reply_port, addr_string);
 
         close_socket_udp(sd_ipv6); 
         close_socket_icmp(sd_icmp_ipv6);
@@ -204,7 +206,7 @@ int trace(struct in_addr dest){
 
                 //se la select ha trovato qualcosa da leggere, leggo dalla socket icmp
                 memset(reply, 0, BUFFER_SIZE);                      //azzero il buffer di risposta
-                int rec = receive_icmp(icmp_sd, reply, 4);             //ricevo un pacchetto icmp
+                int rec = receive_icmp(icmp_sd, reply, NULL, NULL, 4);             //ricevo un pacchetto icmp
 
                 if(rec < 0) {
 
