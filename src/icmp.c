@@ -54,6 +54,7 @@ int receive_icmp(int sd, char *buffer, struct in6_addr *ip , char *addr_string, 
         //passo sd, il buffer, la sua dimensione, il flag 0 per nessuna opzione, indirizzo vuoto creato prima e la sua dimensione
         received = recvfrom(sd, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&reply_addr, &addr_len); 
 
+
     }else if(flag == 6){
 
         struct sockaddr_in6 reply_addr;              
@@ -194,7 +195,7 @@ int extract_rec_data_ipv6(char *data, int *error, int *port){
 
     struct icmp6_hdr *icmp_header = (struct icmp6_hdr *) data ;    //come ipv4 ma con icmp6hdr
     int type = icmp_header->icmp6_type;                                           
-    *error = icmp_header->icmp6_code;                                             
+    *error = icmp_header->icmp6_code;       
 
     //ESTRAZIONE PORTA
     //devo superare icmp e quello ip originale per arrivare a udp

@@ -301,7 +301,7 @@ int trace_ipv6(struct in6_addr dest){
     int max_ttl = 30;                               //traceroute si spinge fino a 30 hop, quindi non vado oltre
     char reply[BUFFER_SIZE];                        //buffer per la risposta icmp
     struct in6_addr reply_addr;                      //la struct per l'indirizzo da cui ho ricevuto risposta
-    char reply_addr_string[INET_ADDRSTRLEN];        //buffer per la conversione da binario a string
+    char reply_addr_string[INET6_ADDRSTRLEN];        //buffer per la conversione da binario a string
     int icmp_error_code;                            //codice di errore ricevuto in icmp
     int reply_port;                                 //porta del probe che ha ricevuto la risposta, per ritrovare il probe giusto
     double ts0;                                     //timestamp del probe
@@ -388,8 +388,8 @@ int trace_ipv6(struct in6_addr dest){
                     strncpy(info.ip_string, reply_addr_string, INET6_ADDRSTRLEN);
                     strncpy(info.url, url_translated, BUFFER_SIZE);     //salvo l'indirizzo della risposta
 
-
-                    //controllo se sono arrivato alla fine (codice errore 3)
+                    
+                    //controllo se sono arrivato alla fine (codice errore 4)
                     if(icmp_error_code == 4) {
 
                         print_final_ipv6(info);                          //stampo il risultato finale
