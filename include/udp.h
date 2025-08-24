@@ -15,10 +15,12 @@
 
 
 int create_socket_udp();
-int ttl_increment(int sd, int ttl);
+int ttl_increment(int sd, int ttl, int flag);
 int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *port);
 void stampa_ttl_test(int sd);
 int close_socket_udp(int sd);
+int create_socket_udp_ipv6();
+int send_probe_ipv6(int sd, struct in6_addr ip_bin, int ttl, int probe_index, int *port);
 
 
 
