@@ -17,7 +17,7 @@
 #include <time.h>                       //necessaria per clock_gettime e timespec   
 #include <netinet/in.h>                    
 
-#define BUFFER_SIZE 1500                //definisco una costante per la dimensione del buffer
+#define BUFFER_SIZE 1500                
 
 
 
@@ -25,12 +25,12 @@
 int check_ipv4(char *ip, struct in_addr *ip_bin){
 
 
-    int val = inet_pton(AF_INET, ip, ip_bin);      //converte l'ip in un formato binario e salva il status code in val
+    int val = inet_pton(AF_INET, ip, ip_bin);                   //converte l'ip in un formato binario e salva il status code in val
 
     if(val == 1) {
 
         //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
-        store_ip(ip, ip_bin, NULL, 4);   //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(ip, ip_bin, NULL, 4);                          //salvo l'ip in formato binario, passando la variabile per argomento
 
         printf("Valid IPv4 address provided: %s\n", ip);
 
@@ -41,9 +41,9 @@ int check_ipv4(char *ip, struct in_addr *ip_bin){
         //devo risolvere l'url in un ip
         printf("Not valid IPv4 address, resolving URL: %s\n", ip);
 
-        char *resolved_ip = dns_resolver_ipv4(ip);     //risolvo l'url in un ip
+        char *resolved_ip = dns_resolver_ipv4(ip);                  //risolvo l'url in un ip
 
-        //salvo l'ip
+    
         if(resolved_ip == NULL) {
 
             fprintf(stderr, "Error resolving URL to IP.\n");
@@ -77,11 +77,11 @@ int check_ipv4(char *ip, struct in_addr *ip_bin){
 void store_ip(char *ip, struct in_addr *ip_bin, struct in6_addr *ip_bin6, int flag) {
 
 
-    if(flag == 4){                                      //flag 4 = ipv4
+    if(flag == 4){                                                  //flag 4 = ipv4
 
-        inet_pton(AF_INET, ip, ip_bin);                 //uso di nuovo inet_pton, ma ora salvo la variabile
+        inet_pton(AF_INET, ip, ip_bin);                             //uso di nuovo inet_pton, ma ora salvo la variabile
     
-    }else if(flag == 6){                                //flag 6 = ipv6 
+    }else if(flag == 6){                                            //flag 6 = ipv6 
 
         inet_pton(AF_INET6, ip, ip_bin6);               
 
@@ -177,16 +177,16 @@ char *dns_resolver_ipv4(char *url){
 
 char *reverse_dns(struct in_addr ip_bin){
 
-    char *url = malloc(BUFFER_SIZE); //alloco dinamicamente per poter farla uscire dalla funzione
-    char buffer_tmp[BUFFER_SIZE]; //buffer temporaneo per getnameinfo, che con l'allocazione dinamica mi dava errore
+    char *url = malloc(BUFFER_SIZE);                                        //alloco dinamicamente per poter farla uscire dalla funzione
+    char buffer_tmp[BUFFER_SIZE];                                           //buffer temporaneo per getnameinfo, che con l'allocazione dinamica mi dava errore
 
     //getnameinfo() vuole una struct sockaddr_in, quindi devo crearla
     struct sockaddr_in ip_addr;
-    memset(&ip_addr, 0, sizeof(ip_addr)); //inizializzo a zero
+    memset(&ip_addr, 0, sizeof(ip_addr));                                   //inizializzo a zero
 
     ip_addr.sin_family = AF_INET; 
     ip_addr.sin_addr = ip_bin; 
-    ip_addr.sin_port = 0; //per il reverse dns non serve la porta
+    ip_addr.sin_port = 0;                                                   //per il reverse dns non serve la porta
 
     //getnameinfo mi serve per la risoluzione dns inversa
     //devo passare come parametri la mia struct sockaddr_in castata in sockaddr (creare direttamente sockaddr risulta complesso), la su a dimesnsione, il buffer, la sua dimensione
@@ -195,11 +195,11 @@ char *reverse_dns(struct in_addr ip_bin){
     int error = getnameinfo((struct sockaddr *)&ip_addr, sizeof(ip_addr), buffer_tmp, sizeof(buffer_tmp), NULL, 0, 0);
 
     if(error != 0) { 
-        //fprintf(stderr, "Error resolving IP to URL\n"); 
+        
         return NULL; 
     }
-    strcpy(url, buffer_tmp); //trasferisco l'url
-    //printf("Resolved IP %s to URL: %s\n", inet_ntoa(ip_bin), url);
+    strcpy(url, buffer_tmp);                                                //trasferisco l'url
+    
 
     return url;
 
@@ -208,14 +208,14 @@ char *reverse_dns(struct in_addr ip_bin){
 
 double gettimestamp(){
 
-    struct timespec ts; //struttura per il timestamp
-    clock_gettime(CLOCK_MONOTONIC, &ts); //prendo il timestamp corrente, uso CLOCK_MONOTONIC per avere un ts indipendente dall'ora del sistema, meglio di CLOCK_REALTIME
+    struct timespec ts;                                                     //struttura per il timestamp
+    clock_gettime(CLOCK_MONOTONIC, &ts);                                    //prendo il timestamp corrente, uso CLOCK_MONOTONIC per avere un ts indipendente dall'ora del sistema, meglio di CLOCK_REALTIME
 
     //voglio il risultato in ms ma ho secondoni e nanosecondi, moltiplico per 1000 i secondi e divido i nanosecondi per 1000000
     double timestamp = ts.tv_sec*1000 + ts.tv_nsec/1000000;
 
-    //printf("Current timestamp: %.2f ms\n", timestamp); //stampo il timestamp per testing (.2f è per avere due decimali)
-    return timestamp; //ritorno il timestamp in ms
+    
+    return timestamp;                                                       //ritorno il timestamp in ms
 
 
 }
@@ -228,12 +228,12 @@ double gettimestamp(){
 
 int check_ipv6(char *ip, struct in6_addr *ip_bin){
 
-    int val = inet_pton(AF_INET6, ip, ip_bin);      //converte l'ip in un formato binario e salva il status code in val
+    int val = inet_pton(AF_INET6, ip, ip_bin);                              //converte l'ip in un formato binario e salva il status code in val
 
     if(val == 1) {
 
         //devo salvare l'ip in una variabile (sia come stringa per la stampa, sia come binario per le socket)
-        store_ip(ip, NULL, ip_bin, 6);   //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(ip, NULL, ip_bin, 6);                                      //salvo l'ip in formato binario, passando la variabile per argomento
 
         printf("Valid IPv6 address provided: %s\n", ip);
         
@@ -246,7 +246,7 @@ int check_ipv6(char *ip, struct in6_addr *ip_bin){
         //devo risolvere l'url in un ip
         printf("Not valid IPv6 address, resolving URL: %s\n", ip);
 
-        char *resolved_ip = dns_resolver_ipv6(ip);     //risolvo l'url in un ip
+        char *resolved_ip = dns_resolver_ipv6(ip);                          //risolvo l'url in un ip
 
         //salvo l'ip
         if(resolved_ip == NULL) {
@@ -256,7 +256,7 @@ int check_ipv6(char *ip, struct in6_addr *ip_bin){
 
         }
 
-        store_ip(resolved_ip, NULL, ip_bin, 6);                     //salvo l'ip in formato binario, passando la variabile per argomento
+        store_ip(resolved_ip, NULL, ip_bin, 6);                             //salvo l'ip in formato binario, passando la variabile per argomento
 
         return 0;
 
@@ -275,34 +275,34 @@ char *dns_resolver_ipv6(char *url){
     struct addrinfo hints; 
     memset(&hints, 0, sizeof(hints));
 
-    hints.ai_family = AF_INET6;                                      //specifico ipv6
-    hints.ai_socktype = SOCK_DGRAM;                                 //specifico socket udp
+    hints.ai_family = AF_INET6;                                         //specifico ipv6
+    hints.ai_socktype = SOCK_DGRAM;                                     //specifico socket udp
 
     struct addrinfo *result;
     int error = getaddrinfo(url, NULL, &hints, &result);
 
-    if(error != 0) {                                                //errore nella risoluzione
+    if(error != 0) {                                                    //errore nella risoluzione
 
         fprintf(stderr, "Error resolving URL\n");
         return NULL; 
 
     }
 
-    if(result == NULL) {                                            //nessun risultato
+    if(result == NULL) {                                                //nessun risultato
 
         fprintf(stderr, "No results found for the URL.\n");
         return NULL;
 
     }
 
-    struct sockaddr *addr_sporca = result->ai_addr;                 //il procedimento è lo stesso di ipv4 ma con sockaddr_in6
+    struct sockaddr *addr_sporca = result->ai_addr;                     //il procedimento è lo stesso di ipv4 ma con sockaddr_in6
     struct sockaddr_in6 *addr = (struct sockaddr_in6 *)addr_sporca;   
-    struct in6_addr ip_bin = addr->sin6_addr;                         //estraggo l'ip reale in binario
+    struct in6_addr ip_bin = addr->sin6_addr;                           //estraggo l'ip reale in binario
 
 
-    char buffer[INET6_ADDRSTRLEN];                                       //buffer temporaneo per la conversione da binario a stringa
+    char buffer[INET6_ADDRSTRLEN];                                      //buffer temporaneo per la conversione da binario a stringa
 
-    if(inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)) == NULL) {   //converto da binario a stringa
+    if(inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)) == NULL) { //converto da binario a stringa
 
         fprintf(stderr, "Error converting binary IP to string.\n");
         freeaddrinfo(result);                                           //libero la memoria allocata da getaddrinfo
@@ -327,16 +327,16 @@ char *dns_resolver_ipv6(char *url){
 
 char *reverse_dns_ipv6(struct in6_addr ip_bin){
 
-    char *url = malloc(BUFFER_SIZE); //alloco dinamicamente per poter farla uscire dalla funzione
-    char buffer_tmp[BUFFER_SIZE]; //buffer temporaneo per getnameinfo, che con l'allocazione dinamica mi dava errore
+    char *url = malloc(BUFFER_SIZE);                                    //alloco dinamicamente per poter farla uscire dalla funzione
+    char buffer_tmp[BUFFER_SIZE];                                       //buffer temporaneo per getnameinfo, che con l'allocazione dinamica mi dava errore
 
     //getnameinfo() vuole una struct sockaddr_in, quindi devo crearla
     struct sockaddr_in6 ip_addr;
-    memset(&ip_addr, 0, sizeof(ip_addr)); //inizializzo a zero
+    memset(&ip_addr, 0, sizeof(ip_addr));                               //inizializzo a zero
 
     ip_addr.sin6_family = AF_INET6; 
     ip_addr.sin6_addr = ip_bin; 
-    ip_addr.sin6_port = 0;          //per il reverse dns non serve la porta
+    ip_addr.sin6_port = 0;                                              //per il reverse dns non serve la porta
 
     //getnameinfo mi serve per la risoluzione dns inversa
     //devo passare come parametri la mia struct sockaddr_in castata in sockaddr (creare direttamente sockaddr risulta complesso), la su a dimesnsione, il buffer, la sua dimensione
@@ -348,7 +348,7 @@ char *reverse_dns_ipv6(struct in6_addr ip_bin){
         
         return NULL; 
     }
-    strcpy(url, buffer_tmp); //trasferisco l'url
+    strcpy(url, buffer_tmp);                                            //trasferisco l'url
     
 
     return url;

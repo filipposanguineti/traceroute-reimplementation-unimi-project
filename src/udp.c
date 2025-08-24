@@ -12,7 +12,7 @@
 #include <netinet/udp.h>
 
 
-#include "utils.h"                      //includo il file header per le dichiarazioni delle funzioni
+#include "utils.h"                      
 
 
 
@@ -20,7 +20,7 @@
 
 int create_socket_udp(){
 
-    int sd = socket(AF_INET, SOCK_DGRAM, 0);                                    //creo una socket UDP, 0 sta per il protocollo predefinito
+    int sd = socket(AF_INET, SOCK_DGRAM, 0);                                        //creo una socket UDP, 0 sta per il protocollo predefinito
     if(sd < 0) {
 
         fprintf(stderr, "Error creating UDP socket.\n");
@@ -28,15 +28,15 @@ int create_socket_udp(){
     }
 
 
-    //ora faccio la bind per settare una porta fissa su cui vogliamo far passare i messaggi
+    //preparo la bind per assegnare una porta interna fissa per l'invio dei miei pacchetti
     struct sockaddr_in bind_addr; 
     memset(&bind_addr, 0, sizeof(bind_addr));
 
-    bind_addr.sin_family = AF_INET;                                             //imposto la famiglia di indirizzi
-    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);                              //voglio usare una qualsiasi interfaccia (se metto 127.0.0.1 rimane solo in loopback), passo INADDR_ANY in big endian
-    bind_addr.sin_port = htons(7777);                                           //metto la porta 7777 in big endian (tutte le comunicazioni passeranno da questa porta interna)
+    bind_addr.sin_family = AF_INET;                                                 //imposto la famiglia di indirizzi
+    bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);                                  //voglio usare una qualsiasi interfaccia (se metto 127.0.0.1 rimane solo in loopback), passo INADDR_ANY in big endian
+    bind_addr.sin_port = htons(7777);                                               //metto la porta 7777 in big endian (tutte le comunicazioni passeranno da questa porta interna)
 
-    int result = bind(sd, (struct sockaddr *)&bind_addr, sizeof(bind_addr));    //faccio la bind della socket all'indirizzo e alla porta
+    int result = bind(sd, (struct sockaddr *)&bind_addr, sizeof(bind_addr));        //faccio la bind della socket all'indirizzo e alla porta
 
     if(result < 0) {
 
@@ -88,19 +88,19 @@ int send_probe(int sd, struct in_addr ip_bin, int ttl, int probe_index, int *por
     //creo la struttura sockaddr_in per il destinatario
     
     //la porta deve essere univoca per ogni probe di ogni ttl. Se sommassi solo base+ttl+index potrei avere delle sovrapposizioni
-    //uso quindi una formula standard che usando la moltiplicazione assicura l'univocita della porta
+    //uso quindi una formula che usando la moltiplicazione assicura l'univocita della porta
     //base + (ttl-1)*numero_di_probe + probe_index (il ttl-1 serve per parire dalla base, ma non è necessario, va bene anche ttl)
     *port = 33434 + (ttl-1)*3 + probe_index;
 
     struct sockaddr_in dest;
     memset(&dest, 0, sizeof(dest)); 
 
-    dest.sin_family = AF_INET;                                                  //imposto la famiglia di indirizzi
-    dest.sin_addr = ip_bin;                                                     //imposto l'indirizzo di destinazione
-    dest.sin_port = htons(*port);                                               //imposto la porta di destinazione con cui identificherò le risposte
+    dest.sin_family = AF_INET;                                                      //imposto la famiglia di indirizzi
+    dest.sin_addr = ip_bin;                                                         //imposto l'indirizzo di destinazione
+    dest.sin_port = htons(*port);                                                   //imposto la porta di destinazione con cui identificherò le risposte
 
     //mando il pacchetto, lo lascio vuoto per comodità
-    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));  //nessun buffer, quindi len 0, nessuna opzione quindi 0
+    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));      //nessun buffer, quindi len 0, nessuna opzione quindi 0
     //sendto prende; sd, un buffer da inviare, la lunghezza del buffer, le opzioni, la destinazione, la dimensione della destinazion
 
 
@@ -179,7 +179,7 @@ int create_socket_udp_ipv6(){
     memset(&bind_addr, 0, sizeof(bind_addr));
 
     bind_addr.sin6_family = AF_INET6;                                             
-    bind_addr.sin6_addr = in6addr_any;                                      //in6addr_any è l'equivalenete di INADDR_ANY per ipv6, è già in big endian             
+    bind_addr.sin6_addr = in6addr_any;                                          //in6addr_any è l'equivalenete di INADDR_ANY per ipv6, è già in big endian             
     bind_addr.sin6_port = htons(7777);      
     
     int result = bind(sd, (struct sockaddr *)&bind_addr, sizeof(bind_addr));    
@@ -206,12 +206,12 @@ int send_probe_ipv6(int sd, struct in6_addr ip_bin, int ttl, int probe_index, in
     struct sockaddr_in6 dest;
     memset(&dest, 0, sizeof(dest)); 
 
-    dest.sin6_family = AF_INET6;                                                  //imposto la famiglia di indirizzi
-    dest.sin6_addr = ip_bin;                                                     //imposto l'indirizzo di destinazione
-    dest.sin6_port = htons(*port);                                               //imposto la porta di destinazione con cui identificherò le risposte
+    dest.sin6_family = AF_INET6;                                                    //imposto la famiglia di indirizzi
+    dest.sin6_addr = ip_bin;                                                        //imposto l'indirizzo di destinazione
+    dest.sin6_port = htons(*port);                                                  //imposto la porta di destinazione con cui identificherò le risposte
 
     //mando il pacchetto, lo lascio vuoto per comodità
-    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));  //uguale a ipv4
+    int sent = sendto(sd, NULL, 0, 0, (struct sockaddr *)&dest, sizeof(dest));      //uguale a ipv4
 
     if(sent < 0) {
 
@@ -219,8 +219,7 @@ int send_probe_ipv6(int sd, struct in6_addr ip_bin, int ttl, int probe_index, in
         return -1;
 
     }else {
-        // char buffer[INET6_ADDRSTRLEN];
-        // printf("Probe sent to %s on port %d\n", inet_ntop(AF_INET6, &ip_bin, buffer, sizeof(buffer)), *port);
+        
         return 0;
 
     }
