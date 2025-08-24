@@ -59,47 +59,36 @@ int main(int argc, char *argv[]) {
 
     if(argc < 3){
 
-
-
-
-
         //IPV4
+
+        //controllo se l'utente ha fornito un ip o un url
+        struct in_addr ip_bin;              //questa è la variabile in cui si salverà l'ip da usare nelle socket
+        check_ipv4(argv[1], &ip_bin); //chiamo la funzione check_ipv4 per verificare se l'ip è valido o se è un url da risolvere
+
+
+        //TRACEROUTE
+
+        char buffer[INET_ADDRSTRLEN];                           //buffer per la conversione da binario a stringa
+        inet_ntop(AF_INET, &ip_bin, buffer, sizeof(buffer));
+        print_intro(buffer, argv[1]);                           //stampo l'intro con l'ip e l'url
+        trace(ip_bin);                                          //chiamo la funzione trace con l'ip binario
+
+    
+        return 0;
+        
+        
     }else if(strcmp(argv[2], "-ipv6") == 0){
 
         //IPV6
-        // printf("IPv6 support is not implemented yet.\n");
-        // struct in6_addr ip_bin_6; //in6-addr è il cugino di in-addr ma per ipv6
-        // check_ipv6(argv[1], &ip_bin_6); 
-        // int sd_ipv6 = create_socket_udp_ipv6(); //creo la socket udp ipv6
-        // int sd_icmp_ipv6 = create_socket_raw_icmp_ipv6();
-
-        // int port;
-        // printf("sd ipv6: %d\n", sd_ipv6);
-        // ttl_increment(sd_ipv6, 10, 6); 
-        // send_probe_ipv6(sd_ipv6, ip_bin_6, 10, 0, &port); //invio un probe ipv6 di prova
-
-        // char buffer[BUFFER_SIZE];
-        // memset(buffer, 0, BUFFER_SIZE);
-        // char addr_string[INET6_ADDRSTRLEN];
-        // struct in6_addr addr;
-        // receive_icmp(sd_icmp_ipv6, buffer, &addr, addr_string, 6);
-        // int error;
-        // int reply_port;
-        // char addr_string_6[INET6_ADDRSTRLEN];
-
-        // extract_rec_data_ipv6(buffer, &error, &reply_port); //estraggo i dati dal pacchetto ricevuto
-        // printf("Error: %d, port: %d, ip: %s\n", error, reply_port, addr_string);
         
-        // char *url = reverse_dns_ipv6(addr); //faccio il reverse dns
-        // printf("URL: %s\n", url);
-
-        // close_socket_udp(sd_ipv6); 
-        // close_socket_icmp(sd_icmp_ipv6);
-        // return 0;
-
-
         struct in6_addr ip_bin6;
-        check_ipv6(argv[1], &ip_bin6); //chiamo la funzione check_ipv6 per verificare se l'ip è valido o se è un url da risolvere
+        int resolved = check_ipv6(argv[1], &ip_bin6); //chiamo la funzione check_ipv6 per verificare se l'ip è valido o se è un url da risolvere
+
+        if(resolved == 1){
+            printf("IPV6 address not disponible\n");
+            return 0;
+        }
+
         char buffer[INET6_ADDRSTRLEN];                           
         inet_ntop(AF_INET6, &ip_bin6, buffer, sizeof(buffer));
         print_intro(buffer, argv[1]);                           
@@ -109,20 +98,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    //controllo se l'utente ha fornito un ip o un url
-    struct in_addr ip_bin;              //questa è la variabile in cui si salverà l'ip da usare nelle socket
-    check_ipv4(argv[1], &ip_bin); //chiamo la funzione check_ipv4 per verificare se l'ip è valido o se è un url da risolvere
-
-
-    //TRACEROUTE
-
-    char buffer[INET_ADDRSTRLEN];                           //buffer per la conversione da binario a stringa
-    inet_ntop(AF_INET, &ip_bin, buffer, sizeof(buffer));
-    print_intro(buffer, argv[1]);                           //stampo l'intro con l'ip e l'url
-    trace(ip_bin);                                          //chiamo la funzione trace con l'ip binario
-
     
-    return 0;
 }
 
 
